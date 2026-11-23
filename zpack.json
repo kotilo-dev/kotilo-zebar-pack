@@ -1,0 +1,126 @@
+{
+  "$schema": "https://github.com/glzr-io/zebar/raw/v3.1.1/resources/zpack-schema.json",
+  "name": "kotilo-zebar-pack",
+  "version": "0.1.0",
+  "description": "A GlazeWM top bar with a dynamic island: control centre, app launcher, Wi-Fi, Bluetooth, sound, calendar, clipboard, notifications, to-do, notes, timers and 17 themes",
+  "tags": [
+    "topbar",
+    "glazewm",
+    "island",
+    "launcher",
+    "control-center",
+    "notifications",
+    "themes"
+  ],
+  "previewImages": [
+    "./resources/preview-image-1.png",
+    "./resources/preview-image-2.png"
+  ],
+  "repositoryUrl": "https://github.com/kotilo-dev/kotilo-zebar-pack",
+  "widgets": [
+    {
+      "name": "bar",
+      "htmlPath": "./dist/bar.html",
+      "zOrder": "normal",
+      "shownInTaskbar": false,
+      "focused": false,
+      "resizable": false,
+      "transparent": true,
+      "includeFiles": [
+        "dist/**"
+      ],
+      "caching": {
+        "defaultDuration": 604800,
+        "rules": []
+      },
+      "privileges": {
+        "shellCommands": []
+      },
+      "presets": [
+        {
+          "name": "default",
+          "anchor": "top_left",
+          "offsetX": "0px",
+          "offsetY": "0px",
+          "width": "100%",
+          "height": "40px",
+          "monitorSelection": {
+            "type": "all"
+          },
+          "dockToEdge": {
+            "enabled": false,
+            "edge": null,
+            "windowMargin": "0px"
+          }
+        }
+      ]
+    },
+    {
+      "name": "island",
+      "htmlPath": "./dist/island.html",
+      "zOrder": "top_most",
+      "shownInTaskbar": false,
+      "focused": false,
+      "resizable": false,
+      "transparent": true,
+      "includeFiles": [
+        "dist/**",
+        "scripts/*.ps1"
+      ],
+      "caching": {
+        "defaultDuration": 604800,
+        "rules": []
+      },
+      "privileges": {
+        "shellCommands": [
+          {
+            "program": "powershell.exe",
+            "argsRegex": "^-NoProfile -NonInteractive -ExecutionPolicy Bypass -File [A-Za-z]:[\\\\/]Users[\\\\/][^\\\\/\" ]+(?:[\\\\/][^\\\\/\" ]+)*[\\\\/](?:[A-Za-z0-9_-]+\\.)?kotilo-zebar-pack(?:@[0-9A-Za-z.+-]+)?[\\\\/]scripts[\\\\/](list-apps|app-icons|sleep|focus|clipboard|audio|wifi|sysmon|calendar|bluetooth|appearance|tweaks|notifications)\\.ps1$"
+          },
+          {
+            "program": "explorer.exe",
+            "argsRegex": "^shell:AppsFolder\\\\.+$"
+          },
+          {
+            "program": "explorer.exe",
+            "argsRegex": "^ms-settings:(network-wifi|bluetooth|notifications)?$"
+          },
+          {
+            "program": "explorer.exe",
+            "argsRegex": "^ms-screenclip:$"
+          },
+          {
+            "program": "explorer.exe",
+            "argsRegex": "^https://(kotilo\\.dev|github\\.com/kotilo-dev)$"
+          },
+          {
+            "program": "rundll32.exe",
+            "argsRegex": "^user32\\.dll,LockWorkStation$"
+          },
+          {
+            "program": "shutdown.exe",
+            "argsRegex": "^(/s /t 0|/r /t 0|/l)$"
+          }
+        ]
+      },
+      "presets": [
+        {
+          "name": "default",
+          "anchor": "top_center",
+          "offsetX": "0px",
+          "offsetY": "0px",
+          "width": "310px",
+          "height": "55px",
+          "monitorSelection": {
+            "type": "primary"
+          },
+          "dockToEdge": {
+            "enabled": false,
+            "edge": null,
+            "windowMargin": "0px"
+          }
+        }
+      ]
+    }
+  ]
+}

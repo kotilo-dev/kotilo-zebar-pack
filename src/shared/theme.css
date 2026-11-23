@@ -1,0 +1,83 @@
+/*
+ * Kotilo theme. Dark surfaces with a mauve accent, after Catppuccin (MIT).
+ * Both widgets share these tokens so the bar and the island read as one surface.
+ */
+:root {
+  --bar-h: 32px;
+
+  --bg: #131220;
+  --surface: #1c1a2b;
+  --surface-2: #262338;
+  --surface-hover: #2e2a44;
+  /* Derived from the base colours below, so a theme (src/shared/themes.ts) only sets those. */
+  --line: color-mix(in srgb, var(--accent) 55%, transparent);
+  --hairline: color-mix(in srgb, var(--text) 8%, transparent);
+
+  --text: #e8e3f7;
+  --subtext: #a7a1bd;
+  --muted: #6f6a85;
+
+  --accent: #cba6f7;
+  --accent-ink: #1b1328;
+  --accent-soft: color-mix(in srgb, var(--accent) 18%, transparent);
+  --accent-ink-soft: color-mix(in srgb, var(--accent-ink) 18%, transparent);
+  --warning: #f9e2af;
+  --danger: #f38ba8;
+  --ok: #a6e3a1;
+
+  --radius: 12px;
+  --radius-sm: 8px;
+
+  --font: 'Inter', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-md: 13px;
+  --text-lg: 15px;
+  --text-hero: 40px;
+
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/*
+ * `clip`, not `hidden`: a hidden overflow can still be scrolled by script, and
+ * focusing a field scrolls it into view. When the island window shrinks while
+ * its search field has focus, that would leave the whole page shifted up.
+ */
+html,
+body,
+#root {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: clip;
+  background: transparent;
+}
+
+body {
+  font-family: var(--font);
+  font-size: var(--text-md);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+  cursor: default;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+svg.lucide {
+  flex: none;
+}
