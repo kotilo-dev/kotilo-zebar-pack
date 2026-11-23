@@ -108,6 +108,8 @@ export function shapeFor(mode: IslandMode, out: Out): Shape {
       return { w: 560, h: BAR_H + 470, r: 30, s: 22 };
     case 'settings':
       return { w: 500, h: BAR_H + 592, r: 30, s: 22 };
+    case 'windows':
+      return { w: 560, h: BAR_H + 470, r: 30, s: 22 };
   }
 }
 

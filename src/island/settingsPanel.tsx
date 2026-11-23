@@ -10,8 +10,8 @@ import { useIsland } from './store';
 import { openWindowsSettings } from './system';
 
 /**
- * Settings: the way into Appearance and About, which items the bar shows on its
- * right side, and which apps' notifications the island ignores. Turning a bar
+ * Settings: the way into About and Appearance, which items the bar shows (the tiling
+ * direction and the right side's items), and which apps' notifications the island ignores. Turning a bar
  * item off writes the hidden list to the widgets' shared storage; the bar
  * follows at once.
  */
@@ -39,17 +39,6 @@ export function SettingsView() {
     <div className="view-panel settings">
       <PanelHeader title="Settings" back />
 
-      <button className="settings-link" onClick={() => openPanel('appearance')}>
-        <span className="tile-icon">
-          <Palette size={16} />
-        </span>
-        <span className="tile-text">
-          <strong>Appearance</strong>
-          <span>Theme, wallpaper and window borders</span>
-        </span>
-        <ChevronRight size={16} className="settings-chevron" />
-      </button>
-
       <button className="settings-link" onClick={() => openPanel('about')}>
         <span className="tile-icon about-icon">
           <img src={logoUrl} alt="" />
@@ -57,6 +46,17 @@ export function SettingsView() {
         <span className="tile-text">
           <strong>About Kotilo</strong>
           <span>Version {version} · kotilo.dev</span>
+        </span>
+        <ChevronRight size={16} className="settings-chevron" />
+      </button>
+
+      <button className="settings-link" onClick={() => openPanel('appearance')}>
+        <span className="tile-icon">
+          <Palette size={16} />
+        </span>
+        <span className="tile-text">
+          <strong>Appearance</strong>
+          <span>Theme, wallpaper and window borders</span>
         </span>
         <ChevronRight size={16} className="settings-chevron" />
       </button>

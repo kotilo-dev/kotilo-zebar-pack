@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- **Added:** a tiling direction button on the bar's left side; a click flips GlazeWM between side by side and stacked.
+- **Added:** an "All windows" button next to it opens a new island panel that lists the windows of every workspace,
+  searchable; a click or Enter switches to that window's workspace and focuses it.
+- **Added:** both buttons can be hidden in Settings → Bar items.
+- **Changed:** About is now the first entry in Settings.
+
 ## 0.1.1 — 2026-11-23
 
 - **Fixed:** in marketplace installs the island never got keyboard focus, so the launcher search could not be

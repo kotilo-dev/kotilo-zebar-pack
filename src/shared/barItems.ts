@@ -1,10 +1,14 @@
 /**
- * The items on the bar's right side, in their order there. The settings panel
+ * The bar items that can be turned off: the tiling direction and the window
+ * list on the left,
+ * then the right side's items in their order there. The settings panel
  * in the island lets each be hidden; the bar reads the hidden list from the
  * widgets' shared storage (`STORED.barHidden`). The list holds hidden items,
  * so an item added in a later version shows up by default.
  */
 export const BAR_ITEMS = [
+  { id: 'tiling', label: 'Tiling direction', hint: 'Side by side or stacked; a click flips it' },
+  { id: 'windows', label: 'All windows', hint: 'A button that lists the windows of every workspace' },
   { id: 'media', label: 'Now playing', hint: 'The playing track, while music or video plays' },
   { id: 'timer', label: 'Timers', hint: 'A running timer, pomodoro or stopwatch' },
   { id: 'todo', label: 'Open tasks', hint: 'How many to-do items are left' },

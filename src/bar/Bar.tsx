@@ -3,6 +3,7 @@ import { emit } from '@tauri-apps/api/event';
 import {
   ArrowDown,
   ArrowUp,
+  AppWindow,
   Battery,
   BatteryCharging,
   BatteryLow,
@@ -10,9 +11,11 @@ import {
   Bluetooth,
   BluetoothOff,
   Coffee,
+  Columns2,
   ListTodo,
   MicOff,
   Network,
+  Rows2,
   Target,
   Timer as TimerIcon,
   Watch,
@@ -71,6 +74,8 @@ export function Bar() {
           <img src={logoUrl} alt="Kotilo" />
         </button>
         <Workspaces out={out} />
+        {shown('tiling') && <TilingDirection out={out} />}
+        {shown('windows') && <AllWindows out={out} />}
         <FocusedTitle out={out} />
       </div>
       <div className="bar-side right">
@@ -125,10 +130,39 @@ function Workspaces({ out }: { out: Out }) {
   );
 }
 
+/**
+ * The direction GlazeWM places the next window in: side by side (horizontal)
+ * or stacked (vertical). A click flips it, like GlazeWM's own shortcut.
+ */
+function TilingDirection({ out }: { out: Out }) {
+  const wm = out.glazewm;
+  if (!wm) return null;
+  const horizontal = wm.tilingDirection === 'horizontal';
+  return (
+    <button
+      className="status tiling-direction"
+      onClick={() => wm.runCommand('toggle-tiling-direction')}
+      title={horizontal ? 'Tiling: side by side (click to stack)' : 'Tiling: stacked (click for side by side)'}
+    >
+      {horizontal ? <Columns2 size={14} /> : <Rows2 size={14} />}
+    </button>
+  );
+}
+
 function FocusedTitle({ out }: { out: Out }) {
   const focused = out.glazewm?.focusedContainer;
   if (!focused || focused.type !== 'window') return null;
   return <span className="focused-title">{focused.processName || focused.title}</span>;
+}
+
+/** Opens the island's list of every window, across all workspaces. */
+function AllWindows({ out }: { out: Out }) {
+  if (!out.glazewm) return null;
+  return (
+    <button className="status all-windows" onClick={() => openPanel('windows')} title="All windows">
+      <AppWindow size={14} />
+    </button>
+  );
 }
 
 /** Asks the island (another window) to open one of its panels. */

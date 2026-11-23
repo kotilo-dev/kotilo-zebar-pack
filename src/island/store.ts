@@ -18,7 +18,8 @@ export type PanelId =
   | 'todo'
   | 'notes'
   | 'settings'
-  | 'notifications';
+  | 'notifications'
+  | 'windows';
 
 export const PANELS: readonly PanelId[] = [
   'control',
@@ -38,6 +39,7 @@ export const PANELS: readonly PanelId[] = [
   'notes',
   'settings',
   'notifications',
+  'windows',
 ];
 
 /** Short-lived indicators shown when something changes. */
