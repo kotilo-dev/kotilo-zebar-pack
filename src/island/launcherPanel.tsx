@@ -55,9 +55,15 @@ type Result = {
   run: () => void;
 };
 
-// Lists kept between openings, so the launcher shows them at once and refreshes in the background.
+// Lists kept between openings, so the launcher shows them at once. Each read
+// starts a PowerShell (about 1.4 s of CPU for the apps, 0.9 s for recent
+// files), so they are read again only when older than these ages.
 let appCache: StartApp[] | null = null;
+let appsReadAt = 0;
 let recentCache: RecentFile[] = [];
+let recentReadAt = 0;
+const APPS_MAX_AGE = 10 * 60_000;
+const RECENT_MAX_AGE = 2 * 60_000;
 
 /**
  * The launcher: one search box for apps, open windows, system and GlazeWM
@@ -81,8 +87,9 @@ export function LauncherView({ out, active }: { out: IslandOutputs; active: bool
   const [armed, setArmed] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
 
-  // Each time the launcher opens: clear the search, focus it, and refresh the
-  // app list and recent files in the background (the cached lists show meanwhile).
+  // Each time the launcher opens: clear the search and focus it. The app list
+  // and recent files are read again in the background once they are older
+  // than their maximum age (the kept lists show meanwhile).
   useEffect(() => {
     if (!active) return;
     setQuery('');
@@ -90,22 +97,35 @@ export function LauncherView({ out, active }: { out: IslandOutputs; active: bool
     setArmed(null);
     setClips(null);
     setIcons(appIconCache());
-    listApps()
-      .then((list) => {
-        appCache = list;
-        setApps(list);
-        setError(null);
-        // Icons load after the list (the first run extracts them, a few seconds),
-        // and again only when an app without an icon shows up.
-        const known = appIconCache();
-        loadAppIcons(list.some((a) => !(a.appId in known)))
-          .then(setIcons)
-          .catch((err) => console.warn('[kotilo] app icons', err));
-      })
-      .catch((err) => setError(String(err)));
-    recentFiles()
-      .then((files) => setRecent((recentCache = files)))
-      .catch((err) => console.warn('[kotilo] recent files', err));
+    const now = Date.now();
+    if (!appCache || now - appsReadAt > APPS_MAX_AGE) {
+      appsReadAt = now;
+      listApps()
+        .then((list) => {
+          appCache = list;
+          setApps(list);
+          setError(null);
+          // Icons load after the list (the first run extracts them, a few seconds),
+          // and again only when an app without an icon shows up.
+          const known = appIconCache();
+          loadAppIcons(list.some((a) => !(a.appId in known)))
+            .then(setIcons)
+            .catch((err) => console.warn('[kotilo] app icons', err));
+        })
+        .catch((err) => {
+          appsReadAt = 0; // Try again on the next opening.
+          setError(String(err));
+        });
+    }
+    if (now - recentReadAt > RECENT_MAX_AGE) {
+      recentReadAt = now;
+      recentFiles()
+        .then((files) => setRecent((recentCache = files)))
+        .catch((err) => {
+          recentReadAt = 0;
+          console.warn('[kotilo] recent files', err);
+        });
+    }
   }, [active]);
 
   useKeepFocused(active, input);

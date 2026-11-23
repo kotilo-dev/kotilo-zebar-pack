@@ -104,6 +104,13 @@ export const prepareFocus = () => void startFocusHelper().catch((err) => console
 const writeStdin = (proc: ShellProcess, data: string) => invoke('shell_write', { pid: proc.processId, buffer: data });
 
 /**
+ * Ends a spawned process. `ShellProcess.kill` has the same fault as `write`
+ * (it sends `processId`, the command wants `pid`), so it never ended anything.
+ */
+const killProcess = (proc: ShellProcess) =>
+  void invoke('shell_kill', { pid: proc.processId }).catch((err) => console.warn('[kotilo] kill failed', err));
+
+/**
  * Gives the island keyboard focus, e.g. after a GlazeWM shortcut opened a panel.
  * Waits until the window has grown to the panel's size first: the helper's
  * click lands at the window's top-left corner, which only then is empty margin
@@ -137,8 +144,15 @@ type Answer = { ok: boolean; error?: string; [key: string]: unknown };
  * when it reaches the head of the queue, not when it is queued: a quick poll
  * queued behind a slow connect must not time out (and kill the helper halfway
  * through the connect) while the connect is still legitimately running.
+ *
+ * Each PowerShell process holds about 60-70 MB, so helpers that are used now
+ * and then get an `idleMs`: with no request for that long, the process exits,
+ * and the next request starts a fresh one (about a second later than usual).
+ * Helpers polled every few seconds, or that must answer at once, stay up.
+ * `stayUp` vetoes an idle exit while the process holds something that ends
+ * with it (keep awake lasts only as long as the tweaks process).
  */
-function lineHelper(script: Script, timeoutMs = 15_000) {
+function lineHelper(script: Script, timeoutMs = 15_000, idleMs?: number, stayUp?: () => boolean) {
   type Waiter = {
     resolve: (answer: Answer) => void;
     timeout: number;
@@ -146,10 +160,28 @@ function lineHelper(script: Script, timeoutMs = 15_000) {
     label: string;
     timer?: ReturnType<typeof setTimeout>;
   };
-  type Running = { proc: ShellProcess; waiting: Waiter[]; startedAt: number };
+  type Running = { proc: ShellProcess; waiting: Waiter[]; startedAt: number; idleExit: boolean };
   let running: Promise<Running> | null = null;
   /** No restart before this time: a helper that dies at start-up must not respawn on every poll. */
   let retryAfter = 0;
+  let idleTimer: ReturnType<typeof setTimeout> | undefined;
+
+  /**
+   * Once nothing is waiting, the helper exits after `idleMs`. It is forgotten
+   * at once, so a request arriving while it shuts down starts a fresh one
+   * instead of writing to the dying process.
+   */
+  const scheduleIdle = (helper: Running, self: Promise<Running>) => {
+    if (!idleMs) return;
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+      // The next answer schedules the idle exit again.
+      if (helper.waiting.length || stayUp?.()) return;
+      if (running === self) running = null;
+      helper.idleExit = true;
+      killProcess(helper.proc);
+    }, idleMs);
+  };
 
   const failAll = (helper: Running, error: string) =>
     helper.waiting.splice(0).forEach((w) => {
@@ -163,14 +195,15 @@ function lineHelper(script: Script, timeoutMs = 15_000) {
     if (!head || head.timer) return;
     head.timer = setTimeout(() => {
       failAll(helper, `${script}: no answer to ${head.label}`);
-      helper.proc.kill();
+      killProcess(helper.proc);
     }, head.timeout);
   };
 
   const start = (): Promise<Running> => {
     if (!running && Date.now() < retryAfter) return Promise.reject(new Error(`${script} helper failed to start`));
-    running ??= shellSpawn('powershell.exe', scriptArgs(script)).then((proc) => {
-      const helper: Running = { proc, waiting: [], startedAt: Date.now() };
+    if (running) return running;
+    const self: Promise<Running> = shellSpawn('powershell.exe', scriptArgs(script)).then((proc) => {
+      const helper: Running = { proc, waiting: [], startedAt: Date.now(), idleExit: false };
       let buffer = '';
       proc.onStdout((chunk) => {
         const parts = (buffer + chunk).split(/\r?\n/);
@@ -191,21 +224,26 @@ function lineHelper(script: Script, timeoutMs = 15_000) {
             waiter.resolve(answer);
             armHead(helper);
           }
+          if (!helper.waiting.length) scheduleIdle(helper, self);
         });
       });
       proc.onStderr((line) => console.warn(`[kotilo] ${script}:`, line));
       proc.onExit(() => {
-        running = null;
-        if (Date.now() - helper.startedAt < 5000) retryAfter = Date.now() + 30_000;
+        // A newer helper may already be running (after an idle exit or a timeout); keep it.
+        if (running === self) running = null;
+        if (!helper.idleExit && Date.now() - helper.startedAt < 5000) retryAfter = Date.now() + 30_000;
         failAll(helper, `${script} helper exited`);
       });
+      // Started by `prepare` with nothing to do yet: the idle clock runs from now.
+      scheduleIdle(helper, self);
       return helper;
     });
-    running.catch(() => {
-      running = null;
+    running = self;
+    self.catch(() => {
+      if (running === self) running = null;
       retryAfter = Date.now() + 30_000;
     });
-    return running;
+    return self;
   };
 
   /**
@@ -215,7 +253,9 @@ function lineHelper(script: Script, timeoutMs = 15_000) {
   async function request<T = Answer>(line: string, timeout = timeoutMs): Promise<T> {
     // A line break would turn one request into two and shift every later answer.
     if (/[\r\n]/.test(line)) throw new Error(`${script}: request contains a line break`);
+    clearTimeout(idleTimer);
     const helper = await start();
+    clearTimeout(idleTimer);
     const answer = new Promise<Answer>((resolve) => {
       helper.waiting.push({ resolve, timeout, label: line.split(' ')[0] });
       armHead(helper);
@@ -225,7 +265,7 @@ function lineHelper(script: Script, timeoutMs = 15_000) {
     } catch (err) {
       // The request never reached the helper, so its answer will not come: reset.
       failAll(helper, String(err));
-      helper.proc.kill();
+      killProcess(helper.proc);
     }
     const result = await answer;
     if (!result.ok) throw new Error(result.error ?? `${script}: ${line} failed`);
@@ -237,6 +277,15 @@ function lineHelper(script: Script, timeoutMs = 15_000) {
 
   return { request, prepare };
 }
+
+/**
+ * How long a helper used now and then (sound, Wi-Fi, appearance, quick
+ * settings, system monitor, calendar) stays up without requests. The
+ * calendar, read every five minutes, thus starts afresh for each read.
+ * Kept up for good: focus, clipboard (both must answer at once),
+ * notifications (every 4 s) and Bluetooth (every 30 s).
+ */
+const HELPER_IDLE_MS = 3 * 60_000;
 
 /* ---- Clipboard history (scripts/clipboard.ps1, Windows' own Win+V history) ---- */
 
@@ -268,7 +317,7 @@ export const clearClipboardHistory = () => clipboard.request('clear').then(() =>
 
 /* ---- Sound (scripts/audio.ps1: default device and per-app volume) ------------- */
 
-const audio = lineHelper('audio');
+const audio = lineHelper('audio', 15_000, HELPER_IDLE_MS);
 
 export type AppSession = { pid: number; name: string; volume: number; muted: boolean };
 
@@ -283,7 +332,7 @@ export const setAppMute = (pid: number, muted: boolean) => audio.request(`app-mu
 /* ---- Wi-Fi (scripts/wifi.ps1, the Native Wifi API) ------------------------------ */
 
 // A scan waits about three seconds, a connection request a little more.
-const wifi = lineHelper('wifi', 20_000);
+const wifi = lineHelper('wifi', 20_000, HELPER_IDLE_MS);
 
 export type WifiNetwork = {
   ssid: string;
@@ -351,7 +400,7 @@ export const openKotiloGithub = () => shellExec('explorer.exe', ['https://github
 
 /* ---- Appearance (scripts/appearance.ps1: wallpapers, GlazeWM border colours) ----- */
 
-const appearance = lineHelper('appearance', 20_000);
+const appearance = lineHelper('appearance', 20_000, HELPER_IDLE_MS);
 
 export type Wallpaper = {
   /** Display name. */
@@ -384,12 +433,18 @@ export const setBorderColors = (focused: string, other: string) =>
 
 /* ---- Quick toggles (scripts/tweaks.ps1: keep awake, app theme, brightness) -------- */
 
-const tweaks = lineHelper('tweaks');
+/** Whether keep awake is on, from the helper's latest answer; while it is, the helper must not exit. */
+let keepingAwake = false;
+
+const tweaks = lineHelper('tweaks', 15_000, HELPER_IDLE_MS, () => keepingAwake);
 
 /** `brightness` is null where the display has no brightness control (most external monitors). */
 export type Tweaks = { awake: boolean; theme: 'dark' | 'light'; brightness: number | null };
 
-const pickTweaks = (a: Tweaks): Tweaks => ({ awake: a.awake, theme: a.theme, brightness: a.brightness ?? null });
+const pickTweaks = (a: Tweaks): Tweaks => {
+  keepingAwake = !!a.awake;
+  return { awake: a.awake, theme: a.theme, brightness: a.brightness ?? null };
+};
 
 export const tweaksStatus = () => tweaks.request<Tweaks>('status').then(pickTweaks);
 /** Keeps the machine from sleeping while on; the screen still turns off and locks as usual. */
@@ -480,7 +535,7 @@ export async function showNotificationApp(n: { app: string; aumid: string | null
 
 /* ---- System monitor (scripts/sysmon.ps1) ----------------------------------------- */
 
-const sysmon = lineHelper('sysmon');
+const sysmon = lineHelper('sysmon', 15_000, HELPER_IDLE_MS);
 
 /** Processes grouped by name: `count` processes, `cpu` % of the whole machine, `mb` private memory. */
 export type ProcessGroup = { name: string; count: number; cpu: number; mb: number };
@@ -490,7 +545,7 @@ export const topProcesses = () => sysmon.request<{ cpu: ProcessGroup[]; memory: 
 /* ---- Calendar (scripts/calendar.ps1, a running Outlook only) --------------------- */
 
 // Outlook can be slow to answer while it syncs.
-const calendar = lineHelper('calendar', 30_000);
+const calendar = lineHelper('calendar', 30_000, HELPER_IDLE_MS);
 
 export type CalendarEvent = {
   subject: string;

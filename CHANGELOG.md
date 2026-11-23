@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- **Changed:** PowerShell helpers used now and then (sound, Wi-Fi, appearance, quick settings, system
+  monitor, calendar) exit after 3 minutes without requests and start again when needed; each held about
+  60-70 MB. Keep awake keeps its helper running while it is on.
+- **Changed:** the launcher reads the app list at most every 10 minutes and recent files every 2 minutes,
+  instead of on every opening (about 2.3 s of CPU each time).
+- **Changed:** the now-playing equalizer animates with `transform` instead of `height`, so it no longer
+  re-lays out the bar and the island on every frame; while media plays this halves Zebar's CPU use.
+- **Fixed:** helpers that stopped answering were never ended: Zebar 3.1.1's `ShellProcess.kill` sends the
+  wrong argument name, like `write`. The island now calls the command directly.
 - **Added:** a weather panel (button in the control centre's top left, or click the weather card): now,
   the next 24 hours and 7 days with rain chance, daily ranges, sunrise, sunset and UV, from Open-Meteo.
 

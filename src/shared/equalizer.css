@@ -6,11 +6,18 @@
   flex: none;
 }
 
+/*
+ * The bars are full height and scaled down: animating `transform` runs on the
+ * compositor, while animating `height` re-laid out the page on every frame
+ * (60 times a second in both the bar and the island while media played).
+ */
 .equalizer i {
   width: 3px;
-  height: 4px;
+  height: 12px;
   border-radius: 1px;
   background: var(--accent);
+  transform: scaleY(0.33);
+  transform-origin: bottom;
 }
 
 .equalizer.playing i {
@@ -28,9 +35,9 @@
 @keyframes eq {
   0%,
   100% {
-    height: 3px;
+    transform: scaleY(0.25);
   }
   50% {
-    height: 12px;
+    transform: scaleY(1);
   }
 }
