@@ -11,6 +11,8 @@ export const providers = createProviderGroup({
   disk: { type: 'disk', refreshInterval: 60_000 },
   battery: { type: 'battery', refreshInterval: 10_000 },
   weather: { type: 'weather', refreshInterval: 30 * 60_000 },
+  // Approximate location for the forecast panel; it rarely changes.
+  ip: { type: 'ip', refreshInterval: 6 * 3600_000 },
   network: { type: 'network', refreshInterval: 3000 },
   glazewm: { type: 'glazewm' },
   systray: { type: 'systray' },

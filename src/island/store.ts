@@ -19,7 +19,8 @@ export type PanelId =
   | 'notes'
   | 'settings'
   | 'notifications'
-  | 'windows';
+  | 'windows'
+  | 'weather';
 
 export const PANELS: readonly PanelId[] = [
   'control',
@@ -40,6 +41,7 @@ export const PANELS: readonly PanelId[] = [
   'settings',
   'notifications',
   'windows',
+  'weather',
 ];
 
 /** Short-lived indicators shown when something changes. */

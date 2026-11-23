@@ -110,6 +110,8 @@ export function shapeFor(mode: IslandMode, out: Out): Shape {
       return { w: 500, h: BAR_H + 592, r: 30, s: 22 };
     case 'windows':
       return { w: 560, h: BAR_H + 470, r: 30, s: 22 };
+    case 'weather':
+      return { w: 600, h: BAR_H + 540, r: 30, s: 22 };
   }
 }
 
@@ -267,6 +269,9 @@ export function ControlView({ out }: { out: Out }) {
           <button onClick={() => openPanel('timer')} title="Timer (Alt+Shift+T)">
             <TimerIcon size={14} />
           </button>
+          <button onClick={() => openPanel('weather')} title="Weather">
+            <CloudSun size={14} />
+          </button>
         </span>
         <span>Control center</span>
         <span className="header-actions">
@@ -357,7 +362,7 @@ export function ControlView({ out }: { out: Out }) {
             )}
           </button>
           {out.weather && (
-            <div className="weather">
+            <div className="weather clickable" role="button" title="Weather forecast" onClick={() => openPanel('weather')}>
               <span className="weather-temp">
                 <WeatherIcon size={18} className="accent" />
                 {Math.round(out.weather.celsiusTemp)}°

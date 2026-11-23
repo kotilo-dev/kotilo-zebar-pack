@@ -29,6 +29,8 @@ panels — all without leaving the keyboard.
   top. Prefixes: `=` calculator and unit conversion (`=10 km to mi`, also without `=`), `:` emoji,
   `?` web search, `,` clipboard history.
 - **Windows:** every window on every workspace with its program icon; search, switch, close one or all.
+- **Weather:** now, the next 24 hours and 7 days (rain chance, daily range, sunrise and sunset), from
+  Open-Meteo for your approximate location.
 - **Panels:** Wi-Fi (join networks), Bluetooth (connect devices), sound devices, system monitor,
   calendar (today and tomorrow, or any day picked in the month, from classic Outlook), clipboard history, system tray, to-do, notes, timer /
   stopwatch / Pomodoro, power menu.
@@ -136,8 +138,9 @@ helpers over their standard input and are checked there.
 - The launcher opens only listed Settings pages, Google searches, and recent files through their
   shortcuts in your `Recent` folder. Recent files appear only while Windows' "Show recently opened items"
   setting is on.
-- Nothing is sent over the network except the weather lookup Zebar itself makes, and a web search
-  when you choose one in the launcher (it opens Google in your browser).
+- Network: Zebar's own weather and IP-location lookups; the weather panel's forecast request to
+  Open-Meteo (approximate coordinates, at most every 15 minutes while the panel is open); and a web
+  search when you choose one in the launcher (it opens Google in your browser). Nothing else.
 
 ## Known limits
 

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Added:** a weather panel (button in the control centre's top left, or click the weather card): now,
+  the next 24 hours and 7 days with rain chance, daily ranges, sunrise, sunset and UV, from Open-Meteo.
+
 - **Added:** the launcher is now one search box, inspired by KRunner and rofi: open windows (switch to
   them), system commands (sign out, restart and shut down need a second Enter), GlazeWM commands, Windows
   Settings pages and recent files, ranked by fuzzy match and frecency.

@@ -18,6 +18,7 @@ import { NotesView } from './notesPanel';
 import { SettingsView } from './settingsPanel';
 import { NotificationsView } from './notificationsPanel';
 import { WindowsView } from './windowsPanel';
+import { WeatherView } from './weatherPanel';
 import { useNotificationPolling } from './notifications';
 import { useTweaks, useTweaksPolling } from './quickActions';
 import {
@@ -171,6 +172,9 @@ export function Island() {
         </View>
         <View name="windows" mode={mode} winWidth={winWidth} out={out}>
           <WindowsView out={out} active={mode === 'windows'} />
+        </View>
+        <View name="weather" mode={mode} winWidth={winWidth} out={out}>
+          <WeatherView out={out} active={mode === 'weather'} />
         </View>
       </div>
     </div>

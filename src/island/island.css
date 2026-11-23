@@ -2348,3 +2348,208 @@ button.header-back:hover {
   font-size: 20px;
   font-weight: 400;
 }
+
+/* ---- Weather: the control centre's card opens the forecast panel ------------ */
+
+.weather.clickable {
+  cursor: pointer;
+  margin: auto -8px -6px;
+  padding: 14px 8px 6px;
+  border-radius: var(--radius);
+  transition: background-color 150ms ease;
+}
+
+.weather.clickable:hover {
+  background: var(--surface);
+}
+
+.weather-panel {
+  min-height: 0;
+  gap: 16px;
+}
+
+.wx-now {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 4px 4px 0;
+}
+
+.wx-now-main {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.wx-now-temp {
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.wx-now-text {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--subtext);
+}
+
+.wx-now-meta {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  font-size: var(--text-xs);
+  color: var(--subtext);
+  text-align: right;
+}
+
+.wx-place {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.wx-sun {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Space before the sunset time. */
+.wx-sun svg:nth-of-type(2) {
+  margin-left: 6px;
+}
+
+.wx-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+}
+
+.wx-hours {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface-2) transparent;
+}
+
+.wx-hour {
+  flex: none;
+  width: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 0;
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: var(--text-xs);
+}
+
+.wx-hour svg {
+  color: var(--accent);
+}
+
+.wx-hour.now {
+  background: var(--accent-soft);
+  outline: 1px solid var(--line);
+}
+
+.wx-hour-time {
+  color: var(--subtext);
+  font-weight: 600;
+}
+
+.wx-hour-temp {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.wx-rain {
+  min-height: 13px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  color: var(--accent);
+}
+
+.wx-days {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wx-day {
+  height: 32px;
+  display: grid;
+  grid-template-columns: 56px 24px 44px 34px 1fr 34px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+}
+
+.wx-day:hover {
+  background: var(--surface);
+}
+
+.wx-day svg {
+  color: var(--accent);
+}
+
+.wx-day-name {
+  font-weight: 600;
+}
+
+.wx-day-min {
+  text-align: right;
+  color: var(--subtext);
+}
+
+.wx-day-max {
+  font-weight: 600;
+}
+
+/* The day's low-to-high range on the week's scale. */
+.wx-range {
+  position: relative;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface-2);
+}
+
+.wx-range-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent-soft), var(--accent));
+}
+
+.wx-range-dot {
+  position: absolute;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  border-radius: 50%;
+  background: var(--text);
+  border: 2px solid var(--bg);
+  transform: translateY(-50%);
+}
+
+.wx-source {
+  margin-top: auto;
+  font-size: var(--text-xs);
+  color: var(--muted);
+  text-align: center;
+}
