@@ -1,6 +1,6 @@
 # Zebar widget pack geliştirme rehberi (kotilo-zebar-pack)
 
-Son güncelleme: 2026-11-22. Kurulu sürüm: **Zebar 3.1.1** (`C:\Program Files\glzr.io\Zebar\zebar.exe`).
+Son güncelleme: 2026-11-23. Kurulu sürüm: **Zebar 3.1.1** (`C:\Program Files\glzr.io\Zebar\zebar.exe`).
 GitHub'daki son sürüm: **3.3.1**. Bu belgedeki bilgilerin kaynağı aşağıdaki "Kaynaklar" bölümünde.
 
 ## 1. Temel kavramlar
@@ -123,6 +123,17 @@ Not: Kurulu sürüm 3.1.1. `audio`, `media`, `systray` gibi bazı provider'ları
 - Paket kökünde: `zebar publish --token <TOKEN>` (veya `ZEBAR_PUBLISH_TOKEN` ortam değişkeni).
 - Seçenekler: `--pack-config`, `--version-override <semver>`, `--commit-sha`, `--release-notes`, `--release-url`.
 - `includeFiles` yalnızca yayınlanacak dosyaları seçer; `node_modules` ve kaynak dosyalar dahil edilmemeli.
+  Kökteki `README.md`, `LICENSE`, `zpack.json` ve `previewImages` yine de pakete giriyor (2026-11-23 kurulumunda görüldü).
+- Paket, token'ın ait olduğu hesabın adıyla yayınlanır. Bu projede yayıncı `xmsadik`.
+- Kurulum klasörü: `%AppData%\zebar\downloads\<yayıncı>.<paket>@<sürüm>`, ör. `xmsadik.kotilo-zebar-pack@0.1.1`.
+  Her sürüm ayrı klasöre kurulur, eskisi silinmez.
+- Kurulan paketin kimliği (pack ID) `<yayıncı>.<paket>` olur; pencere başlığı da buna göre:
+  `Zebar - xmsadik.kotilo-zebar-pack / island`. Yerel kopyada kimlik yalnızca `kotilo-zebar-pack`.
+- Marketplace kopyasını başlangıç ayarına dokunmadan denemek: Zebar'ı kapat, sonra
+  `zebar.exe start-widget-preset --pack xmsadik.kotilo-zebar-pack --widget-name bar --preset default` (island için de
+  aynısı). Aynı kimliğin birden çok sürümü kuruluysa en yenisi açılıyor (0.1.0 ve 0.1.1 kuruluyken 0.1.1 açıldı).
+  İş bitince Zebar'ı normal başlat.
+- Yeni sürüm: `zpack.json` `version` artır, `npm run build`, commit, push, `zebar publish --commit-sha <sha>`.
 
 ## Kaynaklar
 
@@ -155,4 +166,7 @@ Not: Kurulu sürüm 3.1.1. `audio`, `media`, `systray` gibi bazı provider'ları
 | Bluetooth ses cihazında `BluetoothSetServiceState` ile "bağlantıyı kesme" | Ses aygıtı kayboluyor ama Bluetooth bağı (medya tuşları profili) açık kalıyor, `BluetoothGetDeviceInfo` "bağlı" demeye devam ediyor | Ses cihazında "bağlı" = bağ açık **ve** A2DP (`{0000110B-…}`) ya da Handsfree (`{0000111E-…}`) düğümü o an mevcut (`CM_Locate_DevNodeW` bayrak 0) |
 | Hizmet açıkken cihaz bağlı değilse `BluetoothSetServiceState(ENABLE)` | Win32 hata 87 | Önce kapat, sonra aç; cihaz açıksa bağlanıyor |
 | WinRT `DeviceInformation.FindAllAsync` ile Bluetooth "bağlı" bilgisi | Protokol başına ~30 sn; `Properties.Keys` boş görünüyor | Yoklama için kullanılmaz; kayıt defteri + bthprops + cfgmgr32 (istek başına 10-60 ms) |
+| Paket kimliğini (`kotilo-zebar-pack`) bir yola, pencere başlığına ya da kimlik eşleşmesine sabitlemek (2026-11-23) | Yerelde her şey çalışıyor, marketplace kurulumunda bozuluyor: izin kuralı betik yolunu reddediyor; `focus.ps1` island penceresini bulamıyor, klavye girişi gizli "Tauri App" penceresine gidiyor, yazı ve Esc çalışmıyor | Adın önüne isteğe bağlı yayıncı (`(?:[A-Za-z0-9_-]+\.)?`), klasör adının sonuna isteğe bağlı sürüm (`(?:@[0-9A-Za-z.+-]+)?`) koy. Her yayından sonra marketplace'ten kurup dene |
+| Her paketin WebView deposu ayrı (`%AppData%\zebar\webview-cache\<pack ID>\`) | Marketplace kopyası yerel kopyanın ayarlarını (tema, son uygulamalar, notlar) görmüyor, varsayılanlarla başlıyor | Beklenen davranış. Varsayılan tema "Kotilo" (mor) |
+| Yeni Outlook (`olk.exe`) COM arayüzü sunmuyor | `calendar.ps1` "Outlook çalışmıyor" diyor, takvim boş kalıyor | Takvim etkinlikleri yalnızca klasik Outlook (`OUTLOOK.EXE`) ile okunur. Yeni Outlook için tek yol Microsoft Graph (hesapla oturum açma gerekir; yapılmadı) |
 | Kalıcı yardımcı cevabı ilk giren ilk çıkar eşleşmesine dayanıyor | Cevapsız kalan veya ikiye bölünen tek istek, sonraki bütün cevapları kaydırır | `lineHelper`: satır sonu içeren istek reddedilir, zaman aşımında ve yazma hatasında yardımcı öldürülüp bütün bekleyenler hata alır |
