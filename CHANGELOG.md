@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 — 2026-11-24
 
 - **Changed:** PowerShell helpers used now and then (sound, Wi-Fi, appearance, quick settings, system
   monitor, calendar) exit after 3 minutes without requests and start again when needed; each held about
