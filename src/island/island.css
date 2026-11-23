@@ -2272,3 +2272,79 @@ button.header-back:hover {
   font-size: var(--text-xs);
   opacity: 0.7;
 }
+
+/* A close button on each window row, shown on hover or selection like the clipboard's. */
+.window-item {
+  cursor: default;
+}
+
+.window-close {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  margin-right: -6px;
+  border-radius: 50%;
+  color: var(--muted);
+  opacity: 0;
+}
+
+.window-item:not(.selected) .window-close {
+  margin-left: auto;
+}
+
+.window-item:hover .window-close,
+.window-item.selected .window-close {
+  opacity: 1;
+}
+
+.window-item.selected .window-close {
+  color: var(--accent-ink);
+}
+
+.window-close:hover {
+  background: var(--accent-ink-soft);
+}
+
+.window-item:not(.selected) .window-close:hover {
+  background: var(--surface-2);
+  color: var(--danger);
+}
+
+/* ---- Launcher: two-line results, confirmations, emoji ---------------------- */
+
+.result-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.result-sub {
+  font-size: var(--text-xs);
+  opacity: 0.7;
+}
+
+.result:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.result.selected:disabled {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+/* A command waiting for its confirming Enter (sign out, restart, shut down). */
+.result.armed,
+.result.armed.selected {
+  background: var(--danger);
+  color: var(--accent-ink);
+}
+
+.result-avatar.emoji {
+  background: none;
+  font-size: 20px;
+  font-weight: 400;
+}

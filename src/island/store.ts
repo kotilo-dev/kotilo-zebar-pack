@@ -61,6 +61,12 @@ type IslandState = {
   panel: PanelId | null;
   /** When a panel last closed (ms), so a click that arrives right after it does not reopen one. */
   closedAt: number;
+  /**
+   * Until when (ms) losing focus does not close the panel. Closing a window from
+   * the window list makes GlazeWM focus another window; the panel stays open
+   * and takes focus back, so several windows can be closed in a row.
+   */
+  keepOpenUntil: number;
   osd: OsdKind | null;
   banner: Banner | null;
   openPanel: (panel: PanelId) => void;
@@ -79,6 +85,7 @@ let bannerTimer: ReturnType<typeof setTimeout> | undefined;
 export const useIsland = create<IslandState>((set, get) => ({
   panel: null,
   closedAt: 0,
+  keepOpenUntil: 0,
   osd: null,
   banner: null,
 

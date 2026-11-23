@@ -75,7 +75,7 @@
         "shellCommands": [
           {
             "program": "powershell.exe",
-            "argsRegex": "^-NoProfile -NonInteractive -ExecutionPolicy Bypass -File [A-Za-z]:[\\\\/]Users[\\\\/][^\\\\/\" ]+(?:[\\\\/][^\\\\/\" ]+)*[\\\\/](?:[A-Za-z0-9_-]+\\.)?kotilo-zebar-pack(?:@[0-9A-Za-z.+-]+)?[\\\\/]scripts[\\\\/](list-apps|app-icons|sleep|focus|clipboard|audio|wifi|sysmon|calendar|bluetooth|appearance|tweaks|notifications)\\.ps1$"
+            "argsRegex": "^-NoProfile -NonInteractive -ExecutionPolicy Bypass -File [A-Za-z]:[\\\\/]Users[\\\\/][^\\\\/\" ]+(?:[\\\\/][^\\\\/\" ]+)*[\\\\/](?:[A-Za-z0-9_-]+\\.)?kotilo-zebar-pack(?:@[0-9A-Za-z.+-]+)?[\\\\/]scripts[\\\\/](list-apps|app-icons|sleep|focus|clipboard|audio|wifi|sysmon|calendar|bluetooth|appearance|tweaks|notifications|recent|window-icons)\\.ps1$"
           },
           {
             "program": "explorer.exe",
@@ -83,7 +83,7 @@
           },
           {
             "program": "explorer.exe",
-            "argsRegex": "^ms-settings:(network-wifi|bluetooth|notifications)?$"
+            "argsRegex": "^ms-settings:(display|sound|bluetooth|network-wifi|network-status|network-vpn|notifications|quiethours|nightlight|powersleep|batterysaver|storagesense|appsfeatures|defaultapps|startupapps|personalization|personalization-background|colors|themes|taskbar|lockscreen|mousetouchpad|typing|dateandtime|regionlanguage|windowsupdate|privacy|yourinfo|signinoptions|about|multitasking|printers|easeofaccess|clipboard)?$"
           },
           {
             "program": "explorer.exe",
@@ -92,6 +92,14 @@
           {
             "program": "explorer.exe",
             "argsRegex": "^https://(kotilo\\.dev|github\\.com/kotilo-dev)$"
+          },
+          {
+            "program": "rundll32.exe",
+            "argsRegex": "^url\\.dll,FileProtocolHandler https://www\\.google\\.com/search\\?q=[A-Za-z0-9%._~-]+$"
+          },
+          {
+            "program": "explorer.exe",
+            "argsRegex": "^[A-Za-z]:\\\\Users\\\\[^\\\\/:*?\"<>|]+\\\\AppData\\\\Roaming\\\\Microsoft\\\\Windows\\\\Recent\\\\[^\\\\/:*?\"<>|]+\\.lnk$"
           },
           {
             "program": "rundll32.exe",

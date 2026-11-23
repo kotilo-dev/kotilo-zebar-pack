@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Calculator,
   Files,
   Flag,
   Image as ImageIcon,
@@ -21,9 +20,9 @@ import {
   Watch,
   X,
 } from 'lucide-react';
-import { calculate, formatResult } from './calc';
 import { PanelHeader } from './components';
 import type { IslandOutputs } from './providers';
+import { fold } from './search';
 import { useIsland } from './store';
 import {
   appIcons,
@@ -31,10 +30,8 @@ import {
   clipboardHistory,
   copyClipItem,
   deleteClipItem,
-  launchApp,
-  listApps,
   runPower,
-  type ClipItem, type PowerAction, type StartApp } from './system';
+  type ClipItem, type PowerAction } from './system';
 import { POMODORO_LABEL, POMODORO_ROUNDS } from '../shared/liveTimer';
 import { formatDuration, pomodoroLeft, stopwatchElapsed, timerLeft, useNow, useTimer } from './timer';
 
@@ -247,43 +244,8 @@ export function useKeepFocused(active: boolean, input: React.RefObject<HTMLInput
   }, [active, input]);
 }
 
-/* ---- Launcher ----------------------------------------------------------------- */
+/* ---- Start menu app icons (the launcher and the notifications) ---------------- */
 
-const RECENT_KEY = 'kotilo.launcher.recent.v2';
-const MAX_RESULTS = 8;
-
-function readRecent(): string[] {
-  try {
-    return JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]');
-  } catch {
-    return [];
-  }
-}
-
-function rememberRecent(appId: string) {
-  try {
-    localStorage.setItem(RECENT_KEY, JSON.stringify([appId, ...readRecent().filter((id) => id !== appId)].slice(0, 12)));
-  } catch {
-    // Storage unavailable: the list simply starts alphabetical next time.
-  }
-}
-
-/**
- * Lower-cases for matching and treats the Turkish dotless/dotted i as plain i,
- * so "vısual" (typed on a Turkish keyboard) still finds "Visual Studio".
- */
-const fold = (text: string) => text.toLocaleLowerCase('en').replace(/ı/g, 'i').replace(/i̇/g, 'i');
-
-/** Prefix of the name beats prefix of a word, which beats a match anywhere. */
-function score(name: string, query: string) {
-  const n = fold(name);
-  if (n.startsWith(query)) return 3;
-  if (n.split(/[\s\-_.]+/).some((w) => w.startsWith(query))) return 2;
-  if (n.includes(query)) return 1;
-  return 0;
-}
-
-let appCache: StartApp[] | null = null;
 let iconCache: Record<string, string> | null = null;
 let iconLoad: Promise<Record<string, string>> | null = null;
 
@@ -300,158 +262,10 @@ export function loadAppIcons(refresh = false): Promise<Record<string, string>> {
   return iconLoad;
 }
 
+/** The icons loaded so far (empty until the first load). */
+export const appIconCache = () => iconCache ?? {};
+
 export const cachedAppIcon = (appId: string | null) => (appId && iconCache?.[appId]) || undefined;
-
-export function LauncherView({ active }: { active: boolean }) {
-  const closePanel = useIsland((s) => s.closePanel);
-  const showBanner = useIsland((s) => s.showBanner);
-  const [apps, setApps] = useState<StartApp[] | null>(appCache);
-  const [icons, setIcons] = useState<Record<string, string>>(iconCache ?? {});
-  const [error, setError] = useState<string | null>(null);
-  const [query, setQuery] = useState('');
-  const [selected, setSelected] = useState(0);
-  const input = useRef<HTMLInputElement>(null);
-
-  // Each time the launcher opens: clear the search, focus it, and refresh the
-  // app list in the background (the cached list shows meanwhile).
-  useEffect(() => {
-    if (!active) return;
-    setQuery('');
-    setSelected(0);
-    // The notifications may have loaded the shared icons since this view mounted.
-    if (iconCache) setIcons(iconCache);
-    listApps()
-      .then((list) => {
-        appCache = list;
-        setApps(list);
-        setError(null);
-        // Icons load after the list (the first run extracts them, a few seconds),
-        // and again only when an app without an icon shows up.
-        const stale = !iconCache || list.some((a) => !(a.appId in iconCache!));
-        loadAppIcons(stale)
-          .then(setIcons)
-          .catch((err) => console.warn('[kotilo] app icons', err));
-      })
-      .catch((err) => setError(String(err)));
-  }, [active]);
-
-  useKeepFocused(active, input);
-
-  const results = useMemo(() => {
-    if (!apps) return [];
-    const q = fold(query.trim());
-    if (!q) {
-      const recent = readRecent();
-      const byId = new Map(apps.map((a) => [a.appId, a]));
-      const first = recent.map((id) => byId.get(id)).filter((a): a is StartApp => !!a);
-      const rest = apps.filter((a) => !recent.includes(a.appId));
-      return [...first, ...rest].slice(0, MAX_RESULTS);
-    }
-    return apps
-      .map((a) => ({ a, s: score(a.name, q) }))
-      .filter((x) => x.s > 0)
-      .sort((x, y) => y.s - x.s || x.a.name.localeCompare(y.a.name))
-      .slice(0, MAX_RESULTS)
-      .map((x) => x.a);
-  }, [apps, query]);
-
-  const open = (app: StartApp | undefined) => {
-    if (!app) return;
-    rememberRecent(app.appId);
-    closePanel();
-    launchApp(app).catch((err) => setError(String(err)));
-  };
-
-  // "=12*7" turns the search into a calculator; Enter copies the result.
-  const isCalc = query.trimStart().startsWith('=');
-  const calc = isCalc ? calculate(query.trimStart().slice(1)) : null;
-  const copyResult = () => {
-    if (calc == null) return;
-    const text = formatResult(calc);
-    navigator.clipboard
-      .writeText(text)
-      .then(() => {
-        closePanel();
-        showBanner({ icon: 'check', title: `Copied ${text}`, sub: 'Paste with Ctrl+V' }, 1800);
-      })
-      .catch((err) => setError(String(err)));
-  };
-
-  return (
-    <div className="view-panel launcher">
-      <PanelHeader title="Apps" back />
-      <label className="search">
-        <Search size={15} className="accent" />
-        <input
-          ref={input}
-          value={query}
-          placeholder="Search apps"
-          spellCheck={false}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setSelected(0);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'ArrowDown') {
-              e.preventDefault();
-              setSelected((i) => Math.min(i + 1, results.length - 1));
-            } else if (e.key === 'ArrowUp') {
-              e.preventDefault();
-              setSelected((i) => Math.max(i - 1, 0));
-            } else if (e.key === 'Enter') {
-              if (isCalc) copyResult();
-              else open(results[selected]);
-            }
-          }}
-        />
-        {apps && !isCalc && <span className="search-count">{apps.length}</span>}
-      </label>
-      <div className="results">
-        {isCalc && (
-          <button className="result selected" onClick={copyResult} disabled={calc == null}>
-            <span className="result-avatar">
-              <Calculator size={15} />
-            </span>
-            <span className="ellipsis">{calc == null ? 'Type a sum, e.g. =12*7' : `= ${formatResult(calc)}`}</span>
-            {calc != null && <span className="result-hint">Copy ↵</span>}
-          </button>
-        )}
-        {!isCalc && !apps && !error && <span className="muted-text">Loading apps…</span>}
-        {!isCalc && apps && results.length === 0 && <span className="muted-text">Nothing found</span>}
-        {!isCalc && results.map((app, i) => (
-          <button
-            key={app.appId}
-            className={`result ${i === selected ? 'selected' : ''}`}
-            onMouseEnter={() => setSelected(i)}
-            onClick={() => open(app)}
-          >
-            {icons[app.appId] ? (
-              <img className="result-icon" src={icons[app.appId]} alt="" />
-            ) : (
-              <span className="result-avatar">{app.name.slice(0, 1).toUpperCase()}</span>
-            )}
-            <span className="ellipsis">{highlight(app.name, query.trim())}</span>
-            {i === selected && <span className="result-hint">Open ↵</span>}
-          </button>
-        ))}
-        {error && <p className="panel-error ellipsis">{error}</p>}
-      </div>
-    </div>
-  );
-}
-
-function highlight(name: string, query: string) {
-  if (!query) return name;
-  const at = fold(name).indexOf(fold(query));
-  if (at < 0) return name;
-  return (
-    <>
-      {name.slice(0, at)}
-      <mark>{name.slice(at, at + query.length)}</mark>
-      {name.slice(at + query.length)}
-    </>
-  );
-}
 
 /* ---- Clipboard history --------------------------------------------------------- */
 

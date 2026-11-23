@@ -11,6 +11,8 @@ GLZR = PS + r"C:\Users\user\.glzr\zebar\kotilo-zebar-pack\scripts" + "\\"
 DEV = PS + r"C:\Users\user\dev\kotilo-zebar-pack\scripts" + "\\"
 # Where the marketplace installs a pack: %AppData%\zebar\downloads\<publisher>.<pack>@<version>.
 MARKET = PS + r"C:\Users\user\AppData\Roaming\zebar\downloads\kotilo-dev.kotilo-zebar-pack@0.1.0\scripts" + "\\"
+# Where Windows keeps the shortcuts of recently opened files.
+RECENT = r"C:\Users\user\AppData\Roaming\Microsoft\Windows\Recent" + "\\"
 
 cases = [
     ("powershell.exe", GLZR + "list-apps.ps1", True),
@@ -49,11 +51,11 @@ cases = [
     ("explorer.exe", "https://kotiloxdev", False),
     ("powershell.exe", DEV + "appearance.ps1", True),
     ("powershell.exe", DEV + "appearance.ps1 borders #000000 #000000", False),
-    ("explorer.exe", "ms-settings:personalization-background", False),
+    ("explorer.exe", "ms-settings:personalization-background", True),
     ("explorer.exe", "ms-settings:bluetooth-devices", False),
     ("powershell.exe", DEV + "bluetooth.ps1", True),
     ("powershell.exe", DEV + "bluetooth.ps1 radio off", False),
-    ("explorer.exe", "ms-settings:windowsupdate", False),
+    ("explorer.exe", "ms-settings:windowsupdate", True),
     ("powershell.exe", DEV + "tweaks.ps1", True),
     ("powershell.exe", DEV + "tweaks.ps1 theme light", False),
     ("explorer.exe", "ms-screenclip:", True),
@@ -79,6 +81,30 @@ cases = [
     ("powershell.exe", PS + r"C:\Users\user\Downloads\kotilo-zebar-pack-evil\scripts\audio.ps1", False),
     ("powershell.exe", PS + r"C:\Users\user\x\kotilo-zebar-pack@0.1.0 C:\Temp\evil.ps1 \scripts\audio.ps1", False),
     ("powershell.exe", PS + r"C:\Users\user\x\a;b.kotilo-zebar-pack\scripts\audio.ps1", False),
+    # Launcher: new scripts, settings pages, web search and recent files.
+    ("powershell.exe", DEV + "recent.ps1", True),
+    ("powershell.exe", DEV + "window-icons.ps1", True),
+    ("powershell.exe", DEV + "recent.ps1 x", False),
+    ("explorer.exe", "ms-settings:display", True),
+    ("explorer.exe", "ms-settings:display-advanced", False),
+    ("explorer.exe", r"ms-settings:display C:\evil.exe", False),
+    ("rundll32.exe", "url.dll,FileProtocolHandler https://www.google.com/search?q=hello%20world", True),
+    ("rundll32.exe", "url.dll,FileProtocolHandler https://www.google.com/search?q=a%26b%3D1", True),
+    ("rundll32.exe", "url.dll,FileProtocolHandler https://www.google.com/search?q=", False),
+    ("rundll32.exe", "url.dll,FileProtocolHandler https://www.google.com/search?q=a b", False),
+    ("rundll32.exe", "url.dll,FileProtocolHandler https://www.google.com/search?q=a&b=1", False),
+    ("rundll32.exe", r'url.dll,FileProtocolHandler https://www.google.com/search?q=x" C:\evil.exe', False),
+    ("rundll32.exe", "url.dll,FileProtocolHandler https://www.google.com.evil.com/search?q=x", False),
+    ("rundll32.exe", r"url.dll,FileProtocolHandler C:\Windows\evil.exe", False),
+    ("rundll32.exe", "url.dll,FileProtocolHandler file:///C:/evil.exe", False),
+    ("explorer.exe", "https://www.google.com/search?q=hello", False),
+    ("explorer.exe", RECENT + "report 2024.docx.lnk", True),
+    ("explorer.exe", RECENT + "notes.txt.lnk", True),
+    ("explorer.exe", RECENT + r"..\..\evil.lnk", False),
+    ("explorer.exe", RECENT + "evil.exe", False),
+    ("explorer.exe", RECENT + r"sub\x.lnk", False),
+    ("explorer.exe", r"C:\Windows\Temp\x.lnk", False),
+    ("explorer.exe", r"C:\Users\user\Desktop\x.lnk", False),
 ]
 
 bad = 0

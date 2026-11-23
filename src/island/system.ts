@@ -40,7 +40,9 @@ type Script =
   | 'bluetooth'
   | 'appearance'
   | 'tweaks'
-  | 'notifications';
+  | 'notifications'
+  | 'recent'
+  | 'window-icons';
 
 const scriptArgs = (name: Script) => [
   '-NoProfile',
@@ -419,6 +421,51 @@ export const removeNotifications = (ids: number[]) =>
 export const openNotificationSettings = () => shellExec('explorer.exe', ['ms-settings:notifications']);
 /** The Windows Settings app on its home page. */
 export const openWindowsSettings = () => shellExec('explorer.exe', ['ms-settings:']);
+
+/**
+ * One page of the Windows Settings app. Each page needs its name in the
+ * `ms-settings:` rule in zpack.json (see `SETTINGS_PAGES` in launcherSources.ts).
+ */
+export const openSettingsPage = (page: string) => shellExec('explorer.exe', [`ms-settings:${page}`]);
+
+/**
+ * Searches the web in the default browser. The query is percent-encoded down
+ * to letters, digits and `%._~-`, the only characters the zpack.json rule allows.
+ * `explorer.exe` cannot be used here: given an address with a `?`, it opens
+ * File Explorer instead of the browser. `url.dll,FileProtocolHandler` hands
+ * the address to the default browser as is.
+ */
+export function webSearch(query: string) {
+  const q = encodeURIComponent(query).replace(/[!'()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
+  return shellExec('rundll32.exe', ['url.dll,FileProtocolHandler', `https://www.google.com/search?q=${q}`]);
+}
+
+/* ---- Recent files (scripts/recent.ps1) ------------------------------------------ */
+
+/** A shortcut in the user's Recent folder: `lnk` is its path, `target` the file or folder it opens. */
+export type RecentFile = { name: string; lnk: string; target: string; folder: boolean; time: number };
+
+export async function recentFiles(): Promise<RecentFile[]> {
+  const out = await runScript('recent');
+  if (out.code !== 0) throw new Error(out.stderr || `recent exited with ${out.code}`);
+  const raw = JSON.parse(out.stdout || '[]') as RecentFile[] | RecentFile;
+  return Array.isArray(raw) ? raw : [raw];
+}
+
+/** Opens a recent file through its shortcut, which the zpack.json rule limits to the Recent folder. */
+export const openRecentFile = (file: RecentFile) => shellExec('explorer.exe', [file.lnk]);
+
+/* ---- Window icons (scripts/window-icons.ps1) -------------------------------------- */
+
+/** Icons of the programs that have windows, as data URLs keyed by lower-case process name. */
+export async function windowIcons(): Promise<Record<string, string>> {
+  const out = await runScript('window-icons');
+  if (out.code !== 0) throw new Error(out.stderr || `window-icons exited with ${out.code}`);
+  const raw = JSON.parse(out.stdout || '{}') as Record<string, string>;
+  const icons: Record<string, string> = {};
+  for (const [name, png] of Object.entries(raw)) icons[name.toLowerCase()] = png ? `data:image/png;base64,${png}` : '';
+  return icons;
+}
 
 /**
  * Shows the app a notification came from: brings its open window forward, and

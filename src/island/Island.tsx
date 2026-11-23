@@ -8,7 +8,8 @@ import { islandPath, LAYOUT_W, SHRINK_MS, useAnimatedShape, windowSizeFor, type 
 import { listen } from '@tauri-apps/api/event';
 import { AboutView } from './aboutPanel';
 import { AppearanceView } from './appearancePanel';
-import { ClipboardView, LauncherView, PowerView, TimerView, TrayView } from './panels';
+import { ClipboardView, PowerView, TimerView, TrayView } from './panels';
+import { LauncherView } from './launcherPanel';
 import { focusIsland, prepareClipboard, prepareFocus } from './system';
 import { PANELS, resolveMode, useIsland, type IslandMode, type PanelId } from './store';
 import { chime, formatDuration, useShareTimer, useTimer } from './timer';
@@ -70,7 +71,15 @@ export function Island() {
   }, []);
 
   // Esc or a click anywhere else closes an open panel.
-  useEffect(() => onWindowBlur(() => useIsland.getState().closePanel()), []);
+  useEffect(
+    () =>
+      onWindowBlur(() => {
+        const island = useIsland.getState();
+        if (island.panel && Date.now() < island.keepOpenUntil) void focusIsland();
+        else island.closePanel();
+      }),
+    [],
+  );
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && closePanel();
     window.addEventListener('keydown', onKey);
@@ -119,7 +128,7 @@ export function Island() {
           <TimerView active={mode === 'timer'} />
         </View>
         <View name="launcher" mode={mode} winWidth={winWidth} out={out}>
-          <LauncherView active={mode === 'launcher'} />
+          <LauncherView out={out} active={mode === 'launcher'} />
         </View>
         <View name="clipboard" mode={mode} winWidth={winWidth} out={out}>
           <ClipboardView active={mode === 'clipboard'} />

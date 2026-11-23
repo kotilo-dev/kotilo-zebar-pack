@@ -12,7 +12,8 @@ panels — all without leaving the keyboard.
 ## Features
 
 **Bar**
-- GlazeWM workspaces and the focused window's title.
+- GlazeWM workspaces, the tiling direction (click to flip), a button listing every window, and the
+  focused window's title.
 - Live items on the right: now playing, running timer / Pomodoro / stopwatch, open tasks, notifications
   bell, muted microphone, keep awake, network speed, Wi-Fi signal, Bluetooth and battery. Each one can be
   turned off in Settings.
@@ -22,8 +23,12 @@ panels — all without leaving the keyboard.
 - **Control centre:** Wi-Fi, Sound and Bluetooth tiles; microphone, keep awake, light/dark apps and
   screenshot toggles; volume and brightness; CPU, RAM, disk and battery rings; today's date, weather and
   next calendar event; media controls.
-- **App launcher:** search all Start menu apps with their icons, recent apps first; type `=12*7` for a
-  quick calculator.
+- **Launcher:** one search box for Start menu apps, open windows, system commands (lock, sleep,
+  restart…), GlazeWM commands (float, fullscreen, go to or move to a workspace…), Windows Settings pages
+  and recent files. Fuzzy matching (`vsc` finds Visual Studio Code); results you pick often rise to the
+  top. Prefixes: `=` calculator and unit conversion (`=10 km to mi`, also without `=`), `:` emoji,
+  `?` web search, `,` clipboard history.
+- **Windows:** every window on every workspace with its program icon; search, switch, close one or all.
 - **Panels:** Wi-Fi (join networks), Bluetooth (connect devices), sound devices, system monitor,
   calendar (today and tomorrow, or any day picked in the month, from classic Outlook), clipboard history, system tray, to-do, notes, timer /
   stopwatch / Pomodoro, power menu.
@@ -128,7 +133,11 @@ helpers over their standard input and are checked there.
 - **Appearance → wallpaper** sets the Windows wallpaper from `Pictures\Wallpapers`.
 - **Light/dark apps** switches the Windows app theme; **keep awake** blocks sleep while it is on.
 - Caches (app icons, wallpaper thumbnails) live in `%LOCALAPPDATA%\kotilo-zebar-pack`.
-- Nothing is sent over the network except the weather lookup Zebar itself makes.
+- The launcher opens only listed Settings pages, Google searches, and recent files through their
+  shortcuts in your `Recent` folder. Recent files appear only while Windows' "Show recently opened items"
+  setting is on.
+- Nothing is sent over the network except the weather lookup Zebar itself makes, and a web search
+  when you choose one in the launcher (it opens Google in your browser).
 
 ## Known limits
 
