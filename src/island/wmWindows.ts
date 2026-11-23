@@ -58,7 +58,13 @@ export function useWindowIcons(active: boolean, processNames: string[]): Record<
   const [icons, setIcons] = useState(iconCache);
   const missing = processNames.some((n) => !(n.toLowerCase() in iconCache));
   useEffect(() => {
-    if (!active || !missing) return;
+    if (!active) return;
+    // The cache is shared: another view (the launcher, the window list) may
+    // have filled it since this one mounted, so take its current state.
+    if (!missing) {
+      setIcons(iconCache);
+      return;
+    }
     iconLoad ??= windowIcons()
       .then((found) => {
         iconCache = { ...iconCache, ...found };

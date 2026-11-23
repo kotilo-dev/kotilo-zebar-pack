@@ -1,7 +1,7 @@
 {
   "$schema": "https://github.com/glzr-io/zebar/raw/v3.1.1/resources/zpack-schema.json",
   "name": "kotilo-zebar-pack",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A GlazeWM top bar with a dynamic island: control centre, app launcher, Wi-Fi, Bluetooth, sound, calendar, clipboard, notifications, to-do, notes, timers and 17 themes",
   "tags": [
     "topbar",

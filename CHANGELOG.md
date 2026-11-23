@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1 — 2026-11-24
+
+- **Fixed:** program icons did not show in the window list when the launcher had loaded them first.
+
 ## 0.2.0 — 2026-11-24
 
 - **Changed:** PowerShell helpers used now and then (sound, Wi-Fi, appearance, quick settings, system
