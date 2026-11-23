@@ -532,6 +532,11 @@
   color: var(--muted);
 }
 
+button.day:not(.is-today):hover {
+  background: var(--surface-2);
+  color: var(--accent);
+}
+
 .calendar-grid .day.is-today {
   background: var(--accent);
   color: var(--accent-ink);
@@ -1209,6 +1214,24 @@ button.header-back:hover {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--muted);
+}
+
+/* A section title with a small action on its right (the calendar's "Back to today"). */
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.section-link {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.section-link:hover {
+  text-decoration: underline;
 }
 
 .choice {

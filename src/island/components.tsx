@@ -96,8 +96,8 @@ export function isoWeek(date: Date) {
   return Math.ceil(((d.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
 }
 
-/** A month grid, Monday first, always six weeks so its height never changes. */
-export function MonthCalendar({ today }: { today: Date }) {
+/** A month grid, Monday first, always six weeks so its height never changes. `onPick` makes the days clickable. */
+export function MonthCalendar({ today, onPick }: { today: Date; onPick?: (day: Date) => void }) {
   const [offset, setOffset] = useState(0);
   const shown = new Date(today.getFullYear(), today.getMonth() + offset, 1);
 
@@ -131,14 +131,23 @@ export function MonthCalendar({ today }: { today: Date }) {
             {d}
           </span>
         ))}
-        {days.map((d) => (
-          <span
-            key={d.toISOString()}
-            className={`day ${d.getMonth() !== shown.getMonth() ? 'other' : ''} ${same(d, today) ? 'is-today' : ''}`}
-          >
-            {d.getDate()}
-          </span>
-        ))}
+        {days.map((d) => {
+          const className = `day ${d.getMonth() !== shown.getMonth() ? 'other' : ''} ${same(d, today) ? 'is-today' : ''}`;
+          return onPick ? (
+            <button
+              key={d.toISOString()}
+              className={className}
+              onClick={() => onPick(d)}
+              title={d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+            >
+              {d.getDate()}
+            </button>
+          ) : (
+            <span key={d.toISOString()} className={className}>
+              {d.getDate()}
+            </span>
+          );
+        })}
       </div>
     </div>
   );

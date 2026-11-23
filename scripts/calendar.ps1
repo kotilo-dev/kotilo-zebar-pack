@@ -4,11 +4,13 @@
 # writes one request per line to stdin; each answer is one JSON line on stdout.
 #   events -> {"ok":true,"running":false}
 #          -> {"ok":true,"running":true,"events":[{subject,start,end,location,allDay,busy}]}
+#   day <yyyy-MM-dd> -> the same answer for that one day (a day picked in the month grid)
 #
 # start/end are milliseconds since the Unix epoch (UTC); busy is Outlook's
 # BusyStatus integer (0 free, 1 tentative, 2 busy, 3 out of office, 4 elsewhere).
 # The window is today 00:00 up to the day after tomorrow 00:00 (local time),
-# at most 30 items, recurring events expanded.
+# or the picked day 00:00 to the next 00:00; at most 30 items, recurring events
+# expanded.
 #
 # This script never starts Outlook: it only attaches to a running instance with
 # Marshal.GetActiveObject (New-Object -ComObject would launch it). With no
@@ -35,7 +37,7 @@ function ConvertTo-Millis([DateTime]$local) {
   [long][Math]::Floor(($local.ToUniversalTime() - $Epoch).TotalMilliseconds)
 }
 
-function Get-Events {
+function Get-Events([DateTime]$from, [int]$days) {
   $procs = @(Get-Process -Name OUTLOOK -ErrorAction SilentlyContinue)
   foreach ($p in $procs) { $p.Dispose() }
   if ($procs.Count -eq 0) { return @{ ok = $true; running = $false } }
@@ -51,8 +53,7 @@ function Get-Events {
     $items.IncludeRecurrences = $true
     $items.Sort('[Start]')
 
-    $from = [DateTime]::Today
-    $to = $from.AddDays(2)
+    $to = $from.AddDays($days)
     $filter = "[Start] < '" + $to.ToString('g') + "' AND [End] > '" + $from.ToString('g') + "'"
     $restricted = $items.Restrict($filter)
 
@@ -81,7 +82,17 @@ function Get-Events {
 function Invoke-Request([string]$line) {
   $parts = $line.Trim() -split ' ', 2
   switch ($parts[0]) {
-    'events' { return Get-Events }
+    'events' { return Get-Events ([DateTime]::Today) 2 }
+    'day' {
+      $text = if ($parts.Count -gt 1) { $parts[1].Trim() } else { '' }
+      $date = [DateTime]::MinValue
+      if ($text -notmatch '^\d{4}-\d{2}-\d{2}$' -or
+          -not [DateTime]::TryParseExact($text, 'yyyy-MM-dd', [Globalization.CultureInfo]::InvariantCulture,
+            [Globalization.DateTimeStyles]::None, [ref]$date)) {
+        return @{ ok = $false; error = "Bad date '$text'" }
+      }
+      return Get-Events $date 1
+    }
     default { return @{ ok = $false; error = "Unknown request '$($parts[0])'" } }
   }
 }

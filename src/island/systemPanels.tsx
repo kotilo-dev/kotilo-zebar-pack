@@ -35,6 +35,7 @@ import {
   setBluetoothRadio,
   type BtDevice,
   type BtState,
+  calendarDay,
   calendarEvents,
   connectWifi,
   disconnectWifi,
@@ -595,13 +596,23 @@ export function SysmonView({ out, active }: { out: Out; active: boolean }) {
 
 /* ---- Calendar ---------------------------------------------------------------------- */
 
-type CalendarState = { events: CalendarEvent[] | null; loaded: boolean; error: string | null; refresh: () => Promise<void> };
+type CalendarState = {
+  events: CalendarEvent[] | null;
+  loaded: boolean;
+  error: string | null;
+  refresh: () => Promise<void>;
+  /** A day picked in the month grid for the panel to show; null shows today and tomorrow. */
+  picked: Date | null;
+  pick: (day: Date | null) => void;
+};
 
 /** Outlook events, shared by the panel, the control centre and the meeting live activity. */
 export const useCalendar = create<CalendarState>((set) => ({
   events: null,
   loaded: false,
   error: null,
+  picked: null,
+  pick: (picked) => set({ picked }),
   refresh: () =>
     calendarEvents()
       .then((events) => set({ events, loaded: true, error: null }))
@@ -649,18 +660,51 @@ function dayStart(ms: number, plusDays = 0) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate() + plusDays).getTime();
 }
 
+type PickedDay = { events: CalendarEvent[] | null; loaded: boolean; error: string | null };
+
 export function CalendarView({ out, active }: { out: Out; active: boolean }) {
-  const { events, loaded, error, refresh } = useCalendar();
+  const { events: shared, loaded: sharedLoaded, error: sharedError, refresh, picked, pick } = useCalendar();
+  const [day, setDay] = useState<PickedDay>({ events: null, loaded: false, error: null });
   const now = out.clock?.now ?? Date.now();
+  const wasActive = useRef(active);
+
+  // On closing, forget the picked day so the next opening (meeting banner, date)
+  // starts from today. Only on that change: a day is picked just before the
+  // panel opens, while it is still inactive.
+  useEffect(() => {
+    if (wasActive.current && !active) pick(null);
+    wasActive.current = active;
+  }, [active, pick]);
 
   useEffect(() => {
-    if (active) void refresh();
-  }, [active, refresh]);
+    if (!active) return;
+    if (!picked) {
+      void refresh();
+      return;
+    }
+    let current = true;
+    setDay({ events: null, loaded: false, error: null });
+    calendarDay(picked)
+      .then((events) => current && setDay({ events, loaded: true, error: null }))
+      .catch((err) => current && setDay({ events: null, loaded: true, error: String(err) }));
+    return () => {
+      current = false;
+    };
+  }, [active, picked, refresh, pick]);
 
-  const days = [
-    { title: 'Today', from: dayStart(now), to: dayStart(now, 1) },
-    { title: 'Tomorrow', from: dayStart(now, 1), to: dayStart(now, 2) },
-  ];
+  const days = picked
+    ? [
+        {
+          title: picked.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }),
+          from: dayStart(picked.getTime()),
+          to: dayStart(picked.getTime(), 1),
+        },
+      ]
+    : [
+        { title: 'Today', from: dayStart(now), to: dayStart(now, 1) },
+        { title: 'Tomorrow', from: dayStart(now, 1), to: dayStart(now, 2) },
+      ];
+  const { events, loaded, error } = picked ? day : { events: shared, loaded: sharedLoaded, error: sharedError };
 
   return (
     <div className="view-panel calendar-panel">
@@ -674,13 +718,22 @@ export function CalendarView({ out, active }: { out: Out; active: boolean }) {
           </div>
         )}
         {events &&
-          days.map((day) => {
-            const list = events.filter((e) => e.start < day.to && e.end > day.from);
+          days.map((d) => {
+            const list = events.filter((e) => e.start < d.to && e.end > d.from);
             const allDay = list.filter((e) => e.allDay);
             const timed = list.filter((e) => !e.allDay);
             return (
-              <section key={day.title}>
-                <h3 className="section-title">{day.title}</h3>
+              <section key={d.title}>
+                {picked ? (
+                  <div className="section-head">
+                    <h3 className="section-title">{d.title}</h3>
+                    <button className="section-link" onClick={() => pick(null)}>
+                      Back to today
+                    </button>
+                  </div>
+                ) : (
+                  <h3 className="section-title">{d.title}</h3>
+                )}
                 {allDay.length > 0 && (
                   <div className="all-day">
                     {allDay.map((e) => (

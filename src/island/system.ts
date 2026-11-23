@@ -462,6 +462,15 @@ export const calendarEvents = () =>
     .request<{ running: boolean; events?: CalendarEvent[] }>('events')
     .then((a) => (a.running ? a.events ?? [] : null));
 
+/** One day's events (the local day `day` falls in), or `null` while Outlook is not running. */
+export function calendarDay(day: Date) {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const date = `${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}`;
+  return calendar
+    .request<{ running: boolean; events?: CalendarEvent[] }>(`day ${date}`)
+    .then((a) => (a.running ? a.events ?? [] : null));
+}
+
 export type PowerAction = 'lock' | 'sleep' | 'signout' | 'restart' | 'shutdown';
 
 export function runPower(action: PowerAction) {

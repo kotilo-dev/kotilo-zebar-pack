@@ -18,13 +18,18 @@
 # moving the real mouse cursor.
 #
 # The window is found by its title, which Zebar sets to
-# "Zebar - <pack> / <widget>". (The `windowHandle` Zebar 3.1.1 hands widgets
-# belongs to a hidden helper window, not to the visible one.)
+# "Zebar - <pack> / <widget>". The pack ID is "kotilo-zebar-pack" for a local
+# copy and "<publisher>.kotilo-zebar-pack" for a marketplace install, so the
+# title is matched by pattern among Zebar's visible windows. (The
+# `windowHandle` Zebar 3.1.1 hands widgets belongs to a hidden helper window,
+# not to the visible one.)
 $ErrorActionPreference = 'Stop'
 
 Add-Type -Namespace Kotilo -Name Focus -MemberDefinition @'
 public delegate bool EnumProc(IntPtr hWnd, IntPtr lParam);
-[DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern IntPtr FindWindow(string cls, string title);
+[DllImport("user32.dll")] public static extern bool EnumWindows(EnumProc proc, IntPtr lParam);
+[DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder text, int max);
+[DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr hWnd);
 [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);
 [DllImport("user32.dll")] public static extern void mouse_event(uint flags, int dx, int dy, uint data, UIntPtr extra);
 [DllImport("user32.dll")] public static extern bool EnumChildWindows(IntPtr parent, EnumProc proc, IntPtr lParam);
@@ -41,12 +46,26 @@ public static IntPtr FindRenderWindow(IntPtr parent) {
   }, IntPtr.Zero);
   return found;
 }
+
+static readonly System.Text.RegularExpressions.Regex IslandTitle = new System.Text.RegularExpressions.Regex(
+  @"^Zebar - (?:[A-Za-z0-9_-]+\.)?kotilo-zebar-pack / island$");
+
+/// The visible island window, or zero.
+public static IntPtr FindIsland() {
+  IntPtr found = IntPtr.Zero;
+  EnumWindows((h, l) => {
+    if (!IsWindowVisible(h)) return true;
+    var title = new System.Text.StringBuilder(128);
+    GetWindowText(h, title, 128);
+    if (IslandTitle.IsMatch(title.ToString())) { found = h; return false; }
+    return true;
+  }, IntPtr.Zero);
+  return found;
+}
 '@
 
 function Invoke-Focus {
-  # [NullString]::Value, not $null: PowerShell turns $null into "" for string
-  # parameters, and an empty class name matches no window.
-  $hwnd = [Kotilo.Focus]::FindWindow([NullString]::Value, 'Zebar - kotilo-zebar-pack / island')
+  $hwnd = [Kotilo.Focus]::FindIsland()
   if ($hwnd -eq [IntPtr]::Zero) { return 'no-window' }
 
   [Kotilo.Focus]::mouse_event(0x0001, 0, 0, 0, [UIntPtr]::Zero)   # MOUSEEVENTF_MOVE by 0, 0

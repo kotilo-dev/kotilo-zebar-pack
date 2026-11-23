@@ -25,7 +25,7 @@ panels — all without leaving the keyboard.
 - **App launcher:** search all Start menu apps with their icons, recent apps first; type `=12*7` for a
   quick calculator.
 - **Panels:** Wi-Fi (join networks), Bluetooth (connect devices), sound devices, system monitor,
-  calendar (today and tomorrow from Outlook), clipboard history, system tray, to-do, notes, timer /
+  calendar (today and tomorrow, or any day picked in the month, from classic Outlook), clipboard history, system tray, to-do, notes, timer /
   stopwatch / Pomodoro, power menu.
 - **Windows notifications:** live banner in the island, a list panel, per-app filter; clicking a
   notification brings that app's existing window to the front.
@@ -36,7 +36,8 @@ panels — all without leaving the keyboard.
 - Windows 11
 - [Zebar](https://github.com/glzr-io/zebar) 3.1.1 or newer
 - [GlazeWM](https://github.com/glzr-io/glazewm) 3.x (tested with 3.9.1)
-- Optional: Outlook (classic or new) running, for calendar events.
+- Optional: classic Outlook running, for calendar events. The new Outlook for Windows has no local
+  interface to read events from, so with it the calendar shows the month only.
 
 ## Install
 
@@ -134,7 +135,8 @@ helpers over their standard input and are checked there.
 - The helper scripts must live under a user profile path without spaces (`C:\Users\<name>\...`). This is
   a security choice: a space would let another script be slipped into the command line. If your
   Windows user name has a space, the island's panels that use helpers will not work.
-- Calendar events need Outlook to be running; the island never starts Outlook itself.
+- Calendar events need classic Outlook to be running; the island never starts Outlook itself. Click a day
+  in the month grid to see that day's events.
 - Some apps set a different window ID than their notifications use (for example Firefox); clicking their
   notifications starts the app instead of focusing its window.
 

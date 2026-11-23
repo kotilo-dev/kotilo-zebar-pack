@@ -242,6 +242,11 @@ export function ControlView({ out }: { out: Out }) {
   const next = nextEvent(events, now.getTime());
   const bt = useBluetooth((b) => b.state);
   const btOn = bt?.radio === 'on';
+  // Today (or no day) shows today and tomorrow; any other day shows only that day.
+  const openCalendar = (day: Date | null) => {
+    useCalendar.getState().pick(day && day.toDateString() !== now.toDateString() ? day : null);
+    openPanel('calendar');
+  };
 
   return (
     <div className="view-control">
@@ -337,7 +342,7 @@ export function ControlView({ out }: { out: Out }) {
 
       <div className="today-block">
         <div className="today-side">
-          <button className="today-date" onClick={() => openPanel('calendar')} title="Calendar">
+          <button className="today-date" onClick={() => openCalendar(null)} title="Calendar">
             <span className="today-weekday">{now.toLocaleDateString('en-GB', { weekday: 'long' })}</span>
             <span className="today-day">{now.getDate()}</span>
             <span className="today-meta">
@@ -366,7 +371,7 @@ export function ControlView({ out }: { out: Out }) {
             </span>
           )}
         </div>
-        <MonthCalendar today={now} />
+        <MonthCalendar today={now} onPick={(d) => openCalendar(d)} />
       </div>
 
       {session && (
