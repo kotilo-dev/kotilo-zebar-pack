@@ -4,13 +4,19 @@ import { version } from '../../zpack.json';
 import { BAR_ITEMS, type BarItemId } from '../shared/barItems';
 import logoUrl from '../shared/kotilo.svg';
 import { readStored, STORED, writeStored } from '../shared/stored';
+import {
+  DEFAULT_WORKSPACE_STYLE,
+  isWorkspaceStyle,
+  WORKSPACE_STYLES,
+  type WorkspaceStyle,
+} from '../shared/workspaceStyle';
 import { PanelHeader } from './components';
 import { useNotifications } from './notifications';
 import { useIsland } from './store';
 import { openWindowsSettings } from './system';
 
 /**
- * Settings: the way into About and Appearance, which items the bar shows (the tiling
+ * Settings: the way into About and Appearance, how the bar draws workspaces, which items the bar shows (the tiling
  * direction and the right side's items), and which apps' notifications the island ignores. Turning a bar
  * item off writes the hidden list to the widgets' shared storage; the bar
  * follows at once.
@@ -22,6 +28,15 @@ export function SettingsView() {
     const list = readStored<unknown>(STORED.barHidden, []);
     return Array.isArray(list) ? (list as BarItemId[]) : [];
   });
+
+  const [wsStyle, setWsStyle] = useState<WorkspaceStyle>(() => {
+    const v = readStored<unknown>(STORED.workspaceStyle, DEFAULT_WORKSPACE_STYLE);
+    return isWorkspaceStyle(v) ? v : DEFAULT_WORKSPACE_STYLE;
+  });
+  const pickWsStyle = (id: WorkspaceStyle) => {
+    setWsStyle(id);
+    writeStored(STORED.workspaceStyle, id);
+  };
 
   // Apps that have sent notifications, plus any muted earlier, in name order.
   const items = useNotifications((n) => n.items);
@@ -79,7 +94,23 @@ export function SettingsView() {
       </button>
 
       <div className="settings-list panel-scroll">
-        <h3 className="section-title">Bar items</h3>
+        <h3 className="section-title">Workspaces</h3>
+        <div className="ws-styles" role="radiogroup" aria-label="Workspace style">
+          {WORKSPACE_STYLES.map((s) => (
+            <button
+              key={s.id}
+              role="radio"
+              aria-checked={wsStyle === s.id}
+              className={wsStyle === s.id ? 'on' : ''}
+              onClick={() => pickWsStyle(s.id)}
+            >
+              <span className="ws-style-sample">{s.sample}</span>
+              <span className="muted-text">{s.label}</span>
+            </button>
+          ))}
+        </div>
+
+        <h3 className="section-title settings-section">Bar items</h3>
         {BAR_ITEMS.map((item) => {
           const on = !hidden.includes(item.id);
           return (

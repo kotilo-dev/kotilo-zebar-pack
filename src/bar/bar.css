@@ -66,6 +66,54 @@
   color: var(--accent-ink);
 }
 
+/* Kanji glyphs are wider and taller; a lighter weight keeps them in line. */
+.workspaces.style-kanji .workspace {
+  font-weight: 500;
+}
+
+/* Dots: a ring for a kept-alive empty workspace, a filled dot for one with
+   windows, and the focused workspace stretches into an accent pill. */
+.workspaces.style-dots {
+  gap: 2px;
+}
+
+.workspaces.style-dots .workspace {
+  min-width: 0;
+  width: 20px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: transparent;
+}
+
+.workspaces.style-dots .workspace::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--subtext);
+  transition: width 200ms ease, background-color 150ms ease;
+}
+
+.workspaces.style-dots .workspace:hover::before {
+  background: var(--text);
+}
+
+.workspaces.style-dots .workspace.empty::before {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--muted);
+}
+
+.workspaces.style-dots .workspace.focused {
+  width: 28px;
+}
+
+.workspaces.style-dots .workspace.focused::before {
+  width: 22px;
+  background: var(--accent);
+  box-shadow: none;
+}
+
 .chip {
   height: 20px;
   padding: 0 8px;

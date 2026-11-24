@@ -13,6 +13,8 @@ export const STORED = {
   notes: 'kotilo.notes',
   /** Bar items the user turned off in the island's settings (see `barItems.ts`). */
   barHidden: 'kotilo.bar.hidden',
+  /** How the bar draws workspace buttons (see `workspaceStyle.ts`). */
+  workspaceStyle: 'kotilo.bar.workspaceStyle',
   /** How many Windows notifications the island lists (muted apps left out), for the bar's bell. */
   notifyCount: 'kotilo.notify.count',
   /** App names whose notifications the island ignores (set in Settings). */

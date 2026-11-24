@@ -30,11 +30,15 @@ export const allWindows = (wm: WmOutput): WindowRow[] =>
  * Shows the window's workspace, then focuses the window. `focus --container-id`
  * alone moves GlazeWM's focus but can leave the workspace hidden (seen when the
  * island holds the foreground), so the workspace goes first, the way the bar's
- * workspace buttons switch.
+ * workspace buttons switch. A minimized window is restored first.
  */
 export function focusWindow(wm: WmOutput, row: WindowRow) {
+  // A minimized window stays minimized when only focused; `toggle-minimized`
+  // brings it back to the state it had before (tiling, floating, ...).
+  const minimized = row.win.state.type === 'minimized';
   void wm
     .runCommand(`focus --workspace ${row.workspace.name}`)
+    .then(() => (minimized ? wm.runCommand('toggle-minimized', row.win.id) : undefined))
     .then(() => wm.runCommand(`focus --container-id ${row.win.id}`))
     .catch((err) => console.warn('[kotilo] focus window', err));
 }

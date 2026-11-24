@@ -2175,6 +2175,38 @@ button.header-back:hover {
   margin-top: 12px;
 }
 
+/* Workspace style picker: four cards with a sample of each style. */
+.ws-styles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.ws-styles button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1.5px transparent;
+  transition: box-shadow 150ms ease, background-color 150ms ease;
+}
+
+.ws-styles button:hover {
+  background: var(--surface-2);
+}
+
+.ws-styles button.on {
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+
+.ws-style-sample {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 /* ---- Notifications ----------------------------------------------------- */
 
 .notify-count {

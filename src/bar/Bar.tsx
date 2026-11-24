@@ -32,6 +32,7 @@ import logoUrl from '../shared/kotilo.svg';
 import { formatDuration, POMODORO_LABEL, useNow, type SharedTimer } from '../shared/liveTimer';
 import { formatRate } from '../shared/netSpeed';
 import { STORED, useStored } from '../shared/stored';
+import { DEFAULT_WORKSPACE_STYLE, isWorkspaceStyle, workspaceText } from '../shared/workspaceStyle';
 import { openCount, type Todo } from '../shared/todos';
 import { useProviderGroup } from '../shared/useProviders';
 import { placeWindow } from '../shared/widgetWindow';
@@ -96,10 +97,13 @@ export function Bar() {
 
 function Workspaces({ out }: { out: Out }) {
   const wm = out.glazewm;
+  // Picked in the island's settings; an unknown value falls back to numbers.
+  const stored = useStored<unknown>(STORED.workspaceStyle, DEFAULT_WORKSPACE_STYLE);
+  const style = isWorkspaceStyle(stored) ? stored : DEFAULT_WORKSPACE_STYLE;
   if (!wm) return null;
   return (
     <div
-      className="workspaces"
+      className={`workspaces style-${style}`}
       onWheel={(e) => wm.runCommand(e.deltaY < 0 ? 'focus --prev-active-workspace' : 'focus --next-active-workspace')}
     >
       {wm.currentWorkspaces.map((ws) => (
@@ -107,8 +111,9 @@ function Workspaces({ out }: { out: Out }) {
           key={ws.name}
           className={`workspace ${ws.hasFocus ? 'focused' : ''} ${ws.isDisplayed ? 'displayed' : ''} ${ws.children.length ? '' : 'empty'}`}
           onClick={() => wm.runCommand(`focus --workspace ${ws.name}`)}
+          title={style === 'dots' ? `Workspace ${ws.displayName || ws.name}` : undefined}
         >
-          {ws.displayName || ws.name}
+          {workspaceText(style, ws.name, ws.displayName)}
         </button>
       ))}
       {wm.isPaused && (
