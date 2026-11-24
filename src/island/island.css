@@ -2105,7 +2105,7 @@ button.header-back:hover {
   background: none;
 }
 
-.about-icon img {
+.about-icon svg {
   width: 34px;
   height: 34px;
   display: block;

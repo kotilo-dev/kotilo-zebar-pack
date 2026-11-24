@@ -28,7 +28,7 @@ import {
 import { createProviderGroup } from 'zebar';
 import type { BarItemId } from '../shared/barItems';
 import { Equalizer } from '../shared/Equalizer';
-import logoUrl from '../shared/kotilo.svg';
+import { KotiloMark } from '../shared/KotiloMark';
 import { formatDuration, POMODORO_LABEL, useNow, type SharedTimer } from '../shared/liveTimer';
 import { formatRate } from '../shared/netSpeed';
 import { STORED, useStored } from '../shared/stored';
@@ -72,7 +72,7 @@ export function Bar() {
       <div className="bar-side left">
         {/* The logo is the start button: it opens the island's app launcher. */}
         <button className="logo" onClick={() => openPanel('launcher')} title="Apps (Alt+E)">
-          <img src={logoUrl} alt="Kotilo" />
+          <KotiloMark title="Kotilo" />
         </button>
         <Workspaces out={out} />
         {shown('tiling') && <TilingDirection out={out} />}

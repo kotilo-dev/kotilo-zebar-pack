@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ChevronRight, ExternalLink, Monitor, Palette } from 'lucide-react';
 import { version } from '../../zpack.json';
 import { BAR_ITEMS, type BarItemId } from '../shared/barItems';
-import logoUrl from '../shared/kotilo.svg';
+import { KotiloMark } from '../shared/KotiloMark';
 import { readStored, STORED, writeStored } from '../shared/stored';
 import {
   DEFAULT_WORKSPACE_STYLE,
@@ -56,7 +56,7 @@ export function SettingsView() {
 
       <button className="settings-link" onClick={() => openPanel('about')}>
         <span className="tile-icon about-icon">
-          <img src={logoUrl} alt="" />
+          <KotiloMark />
         </span>
         <span className="tile-text">
           <strong>About Kotilo</strong>

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { ExternalLink, Github } from 'lucide-react';
 import { version } from '../../zpack.json';
-import logoUrl from '../shared/kotilo.svg';
+import { KotiloMark } from '../shared/KotiloMark';
 import { PanelHeader } from './components';
 import { openKotiloGithub, openKotiloSite } from './system';
 
@@ -82,7 +82,7 @@ export function AboutView({ active }: { active: boolean }) {
       <div className="about-content">
         <PanelHeader title="About" back="settings" />
         <div className="about-head">
-          <img className="about-logo" src={logoUrl} alt="" />
+          <KotiloMark className="about-logo" />
           <div className="about-title">
             <strong>Kotilo</strong>
             <span>Open-source desktop tools that stay on your machine.</span>
