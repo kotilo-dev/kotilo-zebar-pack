@@ -45,6 +45,7 @@ import type { IslandOutputs } from './providers';
 import { BrightnessRow, QuickToggles, useTweaks } from './quickActions';
 import { BAR_H, type Shape } from './shape';
 import { trayRows } from './panels';
+import { demo } from './demo';
 import { useIsland, type Banner, type IslandMode, type OsdKind } from './store';
 import {
   bluetoothSummary,
@@ -237,7 +238,7 @@ function networkTile(out: Out) {
   const net = out.network;
   const type = net?.defaultInterface?.type;
   if (!net || !type) return { icon: <WifiOff size={16} />, title: 'Network', detail: 'Not connected', active: false };
-  if (type === 'wifi') return { icon: <Wifi size={16} />, title: 'Wi-Fi', detail: net.defaultGateway?.ssid ?? 'Connected', active: true };
+  if (type === 'wifi') return { icon: <Wifi size={16} />, title: 'Wi-Fi', detail: demo(net.defaultGateway?.ssid ?? 'Connected', 'Home'), active: true };
   if (type === 'ethernet') return { icon: <Network size={16} />, title: 'Ethernet', detail: 'Connected', active: true };
   return { icon: <Network size={16} />, title: 'Network', detail: net.defaultInterface?.friendlyName ?? 'Connected', active: true };
 }
@@ -317,7 +318,7 @@ export function ControlView({ out }: { out: Out }) {
         <Tile
           icon={<VolumeIcon size={16} />}
           title="Sound"
-          detail={device ? (device.isMuted ? 'Muted' : device.name) : 'No device'}
+          detail={device ? (device.isMuted ? 'Muted' : demo(device.name, 'Headphones')) : 'No device'}
           active={!!device && !device.isMuted}
           more
           onClick={() => openPanel('audio')}
@@ -327,7 +328,7 @@ export function ControlView({ out }: { out: Out }) {
         <Tile
           icon={btOn ? <Bluetooth size={16} /> : <BluetoothOff size={16} />}
           title="Bluetooth"
-          detail={bluetoothSummary(bt)}
+          detail={demo(bluetoothSummary(bt), 'Headphones')}
           active={btOn}
           more
           onClick={() => openPanel('bluetooth')}

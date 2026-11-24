@@ -3,6 +3,7 @@ import { Droplets, MapPin, Sunrise, Sunset } from 'lucide-react';
 import { PanelHeader } from './components';
 import type { IslandOutputs } from './providers';
 import { describeCode, useForecast, type Day } from './weather';
+import { DEMO } from './demo';
 
 const hhmm = (t: number) => new Date(t).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 const hour = (t: number) => new Date(t).toLocaleTimeString('en-GB', { hour: '2-digit' });
@@ -63,7 +64,7 @@ export function WeatherView({ out, active }: { out: IslandOutputs; active: boole
           <span className="wx-now-text">{nowText}</span>
         </div>
         <div className="wx-now-meta">
-          {ip?.approxCity && (
+          {ip?.approxCity && !DEMO && (
             <span className="wx-place">
               <MapPin size={12} />
               {ip.approxCity}

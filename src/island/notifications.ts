@@ -4,6 +4,7 @@ import { readStored, STORED, writeStored } from '../shared/stored';
 import { cachedAppIcon, loadAppIcons } from './panels';
 import { useIsland, type IslandMode } from './store';
 import { listNotifications, removeNotifications, type WinNotification } from './system';
+import { DEMO } from './demo';
 
 type NotifyStore = {
   /** Every toast Windows lists, newest first (muted apps included; see `visibleNotifications`). */
@@ -45,6 +46,7 @@ const firstLine = (text: string) => text.split('\n')[0];
 
 /** A short banner for a new notification (the newest one if several arrived at once). */
 function announce(fresh: WinNotification[]) {
+  if (DEMO) return;
   const n = fresh[0];
   const more = fresh.length > 1 ? ` · +${fresh.length - 1} more` : '';
   useIsland.getState().showBanner(
