@@ -2,6 +2,9 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefO
 import { POMODORO_LABEL, POMODORO_MIN, POMODORO_ROUNDS } from '../shared/liveTimer';
 import { cssBezier, motion } from '../shared/motion';
 import { useProviderGroup } from '../shared/useProviders';
+import { DEFAULT_BAR_OPACITY, DEFAULT_BAR_STYLE, isBarOpacity, isBarStyle, type WmGaps } from '../shared/barStyle';
+import { STORED, useStored, writeStored } from '../shared/stored';
+import { useMediaArtSync } from './mediaArt';
 import { onWindowBlur, placeWindow } from '../shared/widgetWindow';
 import { providers, type IslandOutputs } from './providers';
 import { islandPath, LAYOUT_W, SHRINK_MS, useAnimatedShape, windowSizeFor, type Shape } from './shape';
@@ -10,12 +13,14 @@ import { AboutView } from './aboutPanel';
 import { AppearanceView } from './appearancePanel';
 import { ClipboardView, PowerView, TimerView, TrayView } from './panels';
 import { LauncherView } from './launcherPanel';
-import { focusIsland, prepareClipboard, prepareFocus } from './system';
+import { focusIsland, glazeGaps, prepareClipboard, prepareFocus } from './system';
 import { PANELS, resolveMode, useIsland, type IslandMode, type PanelId } from './store';
 import { chime, formatDuration, useShareTimer, useTimer } from './timer';
 import { TodoView } from './todoPanel';
 import { NotesView } from './notesPanel';
-import { SettingsView } from './settingsPanel';
+import { BarSettingsView, NotificationSettingsView, SettingsView } from './settingsPanel';
+import { KeybindingsView } from './keybindingsPanel';
+import { RssView } from './rssPanel';
 import { NotificationsView } from './notificationsPanel';
 import { WindowsView } from './windowsPanel';
 import { WeatherView } from './weatherPanel';
@@ -42,6 +47,43 @@ import {
   shapeFor,
 } from './views';
 
+/**
+ * While the bar is floating or in segments, reads GlazeWM's outer gap so the
+ * bar's ends line up with where GlazeWM starts and ends the windows. Read once
+ * when such a style is picked (and at start); the full bar needs no gap.
+ */
+function useGapSync(needed: boolean) {
+  useEffect(() => {
+    if (!needed) return;
+    glazeGaps()
+      .then((g) => writeStored(STORED.wmGaps, { left: g.left, right: g.right, scaleWithDpi: g.scaleWithDpi } satisfies WmGaps))
+      .catch((err) => console.warn('[kotilo] glazewm gaps', err));
+  }, [needed]);
+}
+
+/**
+ * Shares the island's width (body and shoulders) with the bar. A see-through
+ * bar must not stack with the island, or the two layers would show as a darker
+ * block: the full bar cuts its line where the island hangs (the island paints
+ * only below it), the floating bar leaves a hole under the notch. A growing
+ * island shares its new width at once; a shrinking one only once it has
+ * shrunk, so the bar never shows through the part still on screen.
+ */
+function useShareWidth(width: number) {
+  const shared = useRef<number | null>(null);
+  useEffect(() => {
+    const grows = shared.current == null || width > shared.current;
+    const timer = window.setTimeout(
+      () => {
+        shared.current = width;
+        writeStored(STORED.islandWidth, width);
+      },
+      grows ? 0 : SHRINK_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [width]);
+}
+
 export function Island() {
   const out = useProviderGroup(providers);
   const { panel, osd, banner, togglePanel, closePanel } = useIsland();
@@ -52,6 +94,7 @@ export function Island() {
   usePanelRequests();
   useCollectHistory(out);
   useCalendarPolling();
+  useMediaArtSync(out.media?.currentSession);
   const meeting = !!upcomingMeeting(useCalendar((c) => c.events), out.clock?.now ?? Date.now());
 
   const mode = resolveMode({ panel, osd, banner }, { meeting });
@@ -60,7 +103,18 @@ export function Island() {
   useNotificationPolling(mode);
   // The control centre is taller where the display has a brightness control; re-render when that is known.
   useTweaks((t) => t.state?.brightness != null);
-  const target = shapeFor(mode, out);
+  // Without the bar's full-width line (floating or segments style) the island
+  // hangs from the top of the screen like a notch, with no shoulders.
+  const barStyle = useStored<unknown>(STORED.barStyle, DEFAULT_BAR_STYLE);
+  const notch = isBarStyle(barStyle) && barStyle !== 'full';
+  useGapSync(notch);
+  // The island is part of the bar and takes its opacity, panels included (the
+  // cards inside them keep their own solid backgrounds).
+  const storedOpacity = useStored<unknown>(STORED.barOpacity, DEFAULT_BAR_OPACITY);
+  const fillOpacity = isBarOpacity(storedOpacity) ? storedOpacity / 100 : 1;
+  const shaped = shapeFor(mode, out);
+  const target = notch ? { ...shaped, s: 0 } : shaped;
+  useShareWidth(Math.round(target.w + 2 * target.s));
   useFittedWindow(windowSizeFor(target));
   // Everything is drawn in the fixed layout box, centred on the screen's middle.
   const winWidth = LAYOUT_W;
@@ -105,7 +159,14 @@ export function Island() {
 
   return (
     <div className="island-root">
-      <ShapeLayer target={target} winWidth={winWidth} contentRef={contentRef} />
+      <ShapeLayer
+        target={target}
+        winWidth={winWidth}
+        contentRef={contentRef}
+        notch={notch}
+        fillOpacity={fillOpacity}
+        belowLine={!notch && fillOpacity < 1}
+      />
       <div ref={contentRef} className="island-content" onClick={onSurfaceClick}>
         <View name="clock" mode={mode} winWidth={winWidth} out={out}>
           <ClockView out={out} />
@@ -167,6 +228,18 @@ export function Island() {
         <View name="settings" mode={mode} winWidth={winWidth} out={out}>
           <SettingsView />
         </View>
+        <View name="bar-settings" mode={mode} winWidth={winWidth} out={out}>
+          <BarSettingsView />
+        </View>
+        <View name="notify-settings" mode={mode} winWidth={winWidth} out={out}>
+          <NotificationSettingsView />
+        </View>
+        <View name="keybindings" mode={mode} winWidth={winWidth} out={out}>
+          <KeybindingsView out={out} active={mode === 'keybindings'} />
+        </View>
+        <View name="rss" mode={mode} winWidth={winWidth} out={out}>
+          <RssView active={mode === 'rss'} />
+        </View>
         <View name="notifications" mode={mode} winWidth={winWidth} out={out}>
           <NotificationsView active={mode === 'notifications'} />
         </View>
@@ -190,20 +263,28 @@ function ShapeLayer({
   target,
   winWidth,
   contentRef,
+  notch,
+  fillOpacity,
+  belowLine,
 }: {
   target: Shape;
   winWidth: number;
   contentRef: RefObject<HTMLDivElement>;
+  notch: boolean;
+  fillOpacity: number;
+  /** See-through full bar: the bar paints the strip above its line, the island only what hangs below. */
+  belowLine: boolean;
 }) {
   const shape = useAnimatedShape(target);
-  const fill = islandPath(winWidth, shape);
+  // The content is clipped to the whole shape (the clock sits in the bar's strip).
+  const fill = islandPath(winWidth, shape, false, notch);
   useLayoutEffect(() => {
     if (contentRef.current) contentRef.current.style.clipPath = `path('${fill}')`;
   }, [fill, contentRef]);
   return (
     <svg className="island-shape" width={winWidth} height="100%">
-      <path className="island-fill" d={fill} />
-      <path className="island-outline" d={islandPath(winWidth, shape, true)} />
+      <path className="island-fill" d={belowLine ? islandPath(winWidth, shape, false, false, true) : fill} style={{ fillOpacity }} />
+      <path className="island-outline" d={islandPath(winWidth, shape, true, notch)} />
     </svg>
   );
 }

@@ -40,13 +40,23 @@ export function windowSizeFor(shape: Shape) {
  * SVG path of the island inside a window `winW` wide. With `outline` set, the
  * path is the open line along the shoulders, sides and bottom, inset half a
  * pixel so a 1px stroke lands on whole pixels and meets the bar's bottom line.
+ * With `notch` set (bar styles without a full-width line), the sides start at
+ * the top of the screen instead of the bar's line; callers pass `s: 0` then.
+ * With `belowLine` set, the fill leaves out the strip above the bar's line (a
+ * see-through full bar already covers it there, and two layers would show).
  */
-export function islandPath(winW: number, { w, h, r, s }: Shape, outline = false): string {
+export function islandPath(
+  winW: number,
+  { w, h, r, s }: Shape,
+  outline = false,
+  notch = false,
+  belowLine = false,
+): string {
   const inset = outline ? 0.5 : 0;
   const cx = winW / 2;
   const x0 = cx - w / 2 + inset;
   const x1 = cx + w / 2 - inset;
-  const top = BAR_H - inset;
+  const top = (notch ? 0 : BAR_H) - inset;
   const bottom = h - inset;
   const hang = Math.max(0, bottom - top);
 
@@ -68,7 +78,7 @@ export function islandPath(winW: number, { w, h, r, s }: Shape, outline = false)
 
   return outline
     ? `M ${x1 + sx} ${top} ${sides}`
-    : `M ${x0 - sx} 0 H ${x1 + sx} V ${top} ${sides} Z`;
+    : `M ${x0 - sx} ${belowLine ? top : 0} H ${x1 + sx} V ${top} ${sides} Z`;
 }
 
 type Track = { from: number; to: number; start: number; delay: number; duration: number; ease: (t: number) => number };

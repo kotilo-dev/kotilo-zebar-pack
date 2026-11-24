@@ -13,6 +13,7 @@
 
 .island-fill {
   fill: var(--bg);
+  transition: fill-opacity 150ms ease;
 }
 
 .island-outline {
@@ -420,7 +421,7 @@
 .today-side {
   display: flex;
   flex-direction: column;
-  padding-top: 8px;
+  padding-top: 12px; /* the weekday lines up with the calendar's month title */
 }
 
 .today-weekday {
@@ -441,13 +442,6 @@
   font-size: var(--text-sm);
 }
 
-.battery-line {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 10px;
-}
-
 .weather {
   display: flex;
   flex-direction: column;
@@ -458,18 +452,20 @@
 .weather-temp {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.weather-text {
+  margin-top: 2px;
   font-size: var(--text-lg);
   font-weight: 600;
 }
 
-.weather-text {
-  font-size: var(--text-sm);
-  font-weight: 600;
-}
-
 .weather-meta {
-  font-size: var(--text-xs);
+  font-size: var(--text-md);
   color: var(--subtext);
 }
 
@@ -503,6 +499,21 @@
 .calendar-nav button:hover {
   background: var(--surface-2);
   color: var(--text);
+}
+
+.calendar-nav button.calendar-today {
+  width: auto;
+  padding: 0 10px;
+  border-radius: 11px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.calendar-nav button.calendar-today:hover {
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 .calendar-grid {
@@ -547,20 +558,30 @@ button.day:not(.is-today):hover {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 12px 14px;
+  padding: 12px;
   border-radius: var(--radius);
   background: var(--surface);
   border: 1px solid var(--hairline);
 }
 
+/* One row: the cover, then title and artist, then the controls on the right. */
 .media-art {
-  width: 44px;
-  height: 44px;
+  width: 64px;
+  height: 64px;
   flex: none;
   display: grid;
   place-items: center;
+  overflow: hidden;
   border-radius: var(--radius-sm);
   background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.media-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .media-text {
@@ -572,6 +593,7 @@ button.day:not(.is-today):hover {
 
 .media-text strong {
   font-weight: 600;
+  font-size: var(--text-md);
 }
 
 .media-text span {
@@ -582,7 +604,8 @@ button.day:not(.is-today):hover {
 .media-controls {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  padding-right: 4px;
 }
 
 .media-controls button {
@@ -600,6 +623,8 @@ button.day:not(.is-today):hover {
 }
 
 .media-controls button.primary {
+  width: 40px;
+  height: 40px;
   background: var(--accent);
   color: var(--accent-ink);
 }
@@ -1309,6 +1334,12 @@ button.header-back:hover {
   align-items: center;
   justify-content: space-between;
   margin-bottom: -8px;
+}
+
+.chip-button.task-manager {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .list-actions {
@@ -2175,14 +2206,18 @@ button.header-back:hover {
   margin-top: 12px;
 }
 
-/* Workspace style picker: four cards with a sample of each style. */
-.ws-styles {
+/* Style pickers (bar, workspaces): cards with a sample of each style. */
+.option-cards {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 6px;
 }
 
-.ws-styles button {
+.option-cards.three {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.option-cards button {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2194,17 +2229,67 @@ button.header-back:hover {
   transition: box-shadow 150ms ease, background-color 150ms ease;
 }
 
-.ws-styles button:hover {
+.option-cards button:hover {
   background: var(--surface-2);
 }
 
-.ws-styles button.on {
+.option-cards button.on {
   box-shadow: inset 0 0 0 1.5px var(--accent);
 }
 
-.ws-style-sample {
+.option-sample {
   font-weight: 600;
   white-space: nowrap;
+}
+
+/* A tiny bar drawn in each bar style; the two marks stand for its two sides. */
+.bar-sample {
+  width: 76px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 5px;
+  box-sizing: border-box;
+  background: var(--bg);
+  box-shadow: inset 0 -1px 0 var(--line);
+}
+
+.bar-sample i {
+  width: 18px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--subtext);
+}
+
+.bar-sample.floating {
+  width: 68px;
+  height: 14px;
+  margin: 2px 0;
+  border-radius: 7px;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.bar-sample.segments {
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.bar-sample.segments i {
+  width: 28px;
+  height: 14px;
+  border-radius: 7px;
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.settings-row.static {
+  cursor: default;
+}
+
+.settings-row.static:hover {
+  background: none;
 }
 
 /* ---- Notifications ----------------------------------------------------- */
@@ -2383,10 +2468,11 @@ button.header-back:hover {
 
 /* ---- Weather: the control centre's card opens the forecast panel ------------ */
 
+/* Centred in the room below the date (auto margins on both sides). */
 .weather.clickable {
   cursor: pointer;
-  margin: auto -8px -6px;
-  padding: 14px 8px 6px;
+  margin: auto -8px;
+  padding: 6px 8px;
   border-radius: var(--radius);
   transition: background-color 150ms ease;
 }
@@ -2584,4 +2670,221 @@ button.header-back:hover {
   font-size: var(--text-xs);
   color: var(--muted);
   text-align: center;
+}
+
+/* ---- Keybindings ------------------------------------------------------- */
+
+.kb-row {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 34px;
+  padding: 3px 10px;
+  border-radius: var(--radius-sm, 8px);
+}
+
+.kb-row:hover {
+  background: var(--surface);
+}
+
+.kb-label {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-sm);
+}
+
+.kb-keys {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.kb-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.kb-chip > button:first-child,
+.kb-chip.static {
+  padding: 3px 8px;
+  border-radius: 6px;
+  color: var(--text);
+}
+
+.kb-chip > button:first-child:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.kb-chip.recording,
+.kb-add.recording {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.kb-chip.recording > button {
+  color: var(--accent);
+}
+
+.kb-remove {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 22px;
+  color: var(--muted);
+  border-left: 1px solid var(--hairline);
+}
+
+.kb-remove:hover {
+  color: var(--danger);
+}
+
+.kb-add {
+  display: grid;
+  place-items: center;
+  min-width: 26px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 6px;
+  border: 1px dashed var(--hairline);
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.kb-add:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+.kb-note {
+  margin: 10px 10px 4px;
+  font-size: var(--text-xs);
+}
+
+.keybindings-panel .search {
+  margin-bottom: 6px;
+}
+
+/* ---- News (RSS) -------------------------------------------------------- */
+
+.rss .list-head {
+  margin-bottom: 8px;
+}
+
+.rss .list-head .chip-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rss-list {
+  gap: 2px;
+}
+
+.rss-story {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  text-align: left;
+  transition: background-color 150ms ease;
+}
+
+.rss-story:hover {
+  background: var(--surface);
+}
+
+.rss-title {
+  font-size: var(--text-sm);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.rss-meta {
+  font-size: var(--text-xs);
+}
+
+.rss-feed {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 8px 8px 12px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  margin-bottom: 4px;
+}
+
+.rss-feed-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--text-sm);
+}
+
+.rss-feed-text > span:last-child {
+  font-size: var(--text-xs);
+}
+
+.rss-note {
+  margin: 0 4px 4px;
+  font-size: var(--text-xs);
+}
+
+.danger-text {
+  color: var(--danger);
+}
+
+/* Removing a feed is the point of that list, so its button always shows. */
+.rss-feed .clip-delete {
+  opacity: 1;
+}
+
+.rss-filter {
+  flex: none;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-bottom: 8px;
+}
+
+.rss-filter button {
+  flex: none;
+  max-width: 200px;
+  height: 26px;
+  padding: 0 12px;
+  border-radius: 13px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  color: var(--muted);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rss-filter button:hover {
+  color: var(--text);
+}
+
+.rss-filter button.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
 }

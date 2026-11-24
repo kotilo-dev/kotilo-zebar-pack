@@ -117,6 +117,12 @@ export function MonthCalendar({ today, onPick }: { today: Date; onPick?: (day: D
           {MONTHS[shown.getMonth()]} {shown.getFullYear()}
         </button>
         <div className="calendar-nav">
+          {/* Only away from the current month; the title also leads back. */}
+          {offset !== 0 && (
+            <button className="calendar-today" onClick={() => setOffset(0)}>
+              Today
+            </button>
+          )}
           <button onClick={() => setOffset(offset - 1)} aria-label="Previous month">
             <ChevronLeft size={14} />
           </button>

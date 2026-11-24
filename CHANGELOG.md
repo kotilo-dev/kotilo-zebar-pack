@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.3.0 — 2026-11-24
+
+- **Added:** a News panel (RSS button in the control centre's top left): stories from your RSS and Atom
+  feeds, newest first, with a feed filter; a click opens the story in your browser. Feeds are read by a
+  helper (most feeds cannot be read from the page) and only when the panel opens, at most every 15 minutes.
+- **Added:** Settings › Keybindings lists Kotilo's and GlazeWM's shortcuts from GlazeWM's config. Click a
+  key combination and press new keys to change it; conflicts are refused, the change is written to that
+  one line of the config and GlazeWM reloads it. Shortcuts can also be found in the launcher.
+- **Added:** bar styles (full, floating, segments) and bar opacity in Settings; the floating bar lines up
+  with GlazeWM's outer gaps, and the island follows the opacity.
+- **Added:** workspace styles in Settings (numbers, dots, Roman, kanji).
+- **Added:** a Task Manager button in the control centre and on the system monitor, and a Today button
+  in the calendar.
+- **Changed:** Settings is split into pages: Appearance, Bar & workspaces, Notifications, Keybindings;
+  Windows Settings is at the bottom.
+- **Changed:** the now-playing equalizer is replaced by the album cover in the island's media card (the
+  bar shows a music icon); while media plays this uses about a third of the CPU.
+- **Changed:** the media card is one row with the controls on the right; the weather card is larger and
+  no longer repeats the battery.
+- **Changed:** the Kotilo logo follows the theme colours.
+- **Fixed:** picking a minimized window in the window list now restores it.
+
 ## 0.2.1 — 2026-11-24
 
 - **Fixed:** program icons did not show in the window list when the launcher had loaded them first.

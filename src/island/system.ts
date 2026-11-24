@@ -42,7 +42,9 @@ type Script =
   | 'tweaks'
   | 'notifications'
   | 'recent'
-  | 'window-icons';
+  | 'window-icons'
+  | 'media-art'
+  | 'rss';
 
 const scriptArgs = (name: Script) => [
   '-NoProfile',
@@ -427,6 +429,29 @@ export const listWallpapers = () =>
 export const setWallpaper = (file: string) =>
   appearance.request<{ current: string }>(`set-wallpaper ${hex(file)}`).then((a) => a.current);
 
+/** One entry of GlazeWM's top-level `keybindings:` list; `line` identifies it for `setKeybinding`. */
+export type WmKeybinding = { line: number; commands: string[]; bindings: string[]; editable: boolean };
+
+/** GlazeWM's keybindings, read from its config. */
+export const listKeybindings = () =>
+  appearance.request<{ items: WmKeybinding[] }>('keybindings').then((a) =>
+    (a.items ?? []).map((k) => ({ ...k, commands: k.commands ?? [], bindings: k.bindings ?? [] })),
+  );
+
+/**
+ * Writes new key combinations for one keybinding to GlazeWM's config (only its
+ * `bindings:` line; refused when the entry no longer runs `commands`). The
+ * caller reloads GlazeWM's config afterwards.
+ */
+export const setKeybinding = (k: WmKeybinding, bindings: string[]) =>
+  appearance
+    .request<{ changed: boolean }>(`set-keybinding ${k.line} ${hex(JSON.stringify(k.commands))} ${hex(JSON.stringify(bindings))}`)
+    .then((a) => a.changed);
+
+/** GlazeWM's outer gap from its config (read only); sides not given in px are null. */
+export const glazeGaps = () =>
+  appearance.request<{ left: number | null; right: number | null; scaleWithDpi: boolean }>('gaps');
+
 /** Writes the two GlazeWM border colours to its config (only those two lines). `changed` is false if they already matched. */
 export const setBorderColors = (focused: string, other: string) =>
   appearance.request<{ changed: boolean }>(`borders ${focused} ${other}`).then((a) => a.changed);
@@ -478,6 +503,12 @@ export const openNotificationSettings = () => shellExec('explorer.exe', ['ms-set
 export const openWindowsSettings = () => shellExec('explorer.exe', ['ms-settings:']);
 
 /**
+ * Opens Task Manager (or brings an open one forward). Spawned rather than
+ * exec'd: `shellExec` would wait until Task Manager is closed.
+ */
+export const openTaskManager = () => shellSpawn('taskmgr.exe', []);
+
+/**
  * One page of the Windows Settings app. Each page needs its name in the
  * `ms-settings:` rule in zpack.json (see `SETTINGS_PAGES` in launcherSources.ts).
  */
@@ -520,6 +551,17 @@ export async function windowIcons(): Promise<Record<string, string>> {
   const icons: Record<string, string> = {};
   for (const [name, png] of Object.entries(raw)) icons[name.toLowerCase()] = png ? `data:image/png;base64,${png}` : '';
   return icons;
+}
+
+/* ---- Cover of the playing track (scripts/media-art.ps1) ----------------------------- */
+
+/** The current media session's title and cover (a JPEG data URL, or '' without one); null when nothing plays. */
+export async function mediaArt(): Promise<{ title: string; art: string } | null> {
+  const out = await runScript('media-art');
+  if (out.code !== 0) throw new Error(out.stderr || `media-art exited with ${out.code}`);
+  const raw = JSON.parse(out.stdout || '{}') as { ok?: boolean; title?: string | null; art?: string };
+  if (!raw.ok) return null;
+  return { title: raw.title ?? '', art: raw.art ? `data:image/jpeg;base64,${raw.art}` : '' };
 }
 
 /**
@@ -589,3 +631,16 @@ export function runPower(action: PowerAction) {
       return shellExec('shutdown.exe', ['/s', '/t', '0']);
   }
 }
+
+/* ---- News (RSS and Atom) ---- */
+
+const rss = lineHelper('rss', 20_000, HELPER_IDLE_MS);
+
+export type FeedItem = { title: string; link: string; date: string };
+
+/** Downloads and reads one feed (in the helper: most feeds cannot be fetched from the page). */
+export const fetchFeed = (url: string) =>
+  rss.request<{ title: string; items: FeedItem[] }>(`fetch ${hex(url)}`).then((a) => ({ title: a.title ?? url, items: a.items ?? [] }));
+
+/** Opens a story in the default browser; the helper accepts http and https links only. */
+export const openFeedLink = (url: string) => rss.request(`open ${hex(url)}`);

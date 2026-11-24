@@ -1,7 +1,7 @@
 {
   "$schema": "https://github.com/glzr-io/zebar/raw/v3.1.1/resources/zpack-schema.json",
   "name": "kotilo-zebar-pack",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "A GlazeWM top bar with a dynamic island: control centre, app launcher, Wi-Fi, Bluetooth, sound, calendar, clipboard, notifications, to-do, notes, timers and 17 themes",
   "tags": [
     "topbar",
@@ -75,7 +75,7 @@
         "shellCommands": [
           {
             "program": "powershell.exe",
-            "argsRegex": "^-NoProfile -NonInteractive -ExecutionPolicy Bypass -File [A-Za-z]:[\\\\/]Users[\\\\/][^\\\\/\" ]+(?:[\\\\/][^\\\\/\" ]+)*[\\\\/](?:[A-Za-z0-9_-]+\\.)?kotilo-zebar-pack(?:@[0-9A-Za-z.+-]+)?[\\\\/]scripts[\\\\/](list-apps|app-icons|sleep|focus|clipboard|audio|wifi|sysmon|calendar|bluetooth|appearance|tweaks|notifications|recent|window-icons)\\.ps1$"
+            "argsRegex": "^-NoProfile -NonInteractive -ExecutionPolicy Bypass -File [A-Za-z]:[\\\\/]Users[\\\\/][^\\\\/\" ]+(?:[\\\\/][^\\\\/\" ]+)*[\\\\/](?:[A-Za-z0-9_-]+\\.)?kotilo-zebar-pack(?:@[0-9A-Za-z.+-]+)?[\\\\/]scripts[\\\\/](list-apps|app-icons|sleep|focus|clipboard|audio|wifi|sysmon|calendar|bluetooth|appearance|tweaks|notifications|recent|window-icons|media-art|rss)\\.ps1$"
           },
           {
             "program": "explorer.exe",
@@ -104,6 +104,10 @@
           {
             "program": "rundll32.exe",
             "argsRegex": "^user32\\.dll,LockWorkStation$"
+          },
+          {
+            "program": "taskmgr.exe",
+            "argsRegex": "^$"
           },
           {
             "program": "shutdown.exe",

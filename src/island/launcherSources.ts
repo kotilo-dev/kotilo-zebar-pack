@@ -7,6 +7,7 @@ import {
   File,
   Folder,
   Globe,
+  Keyboard,
   Layers,
   Lock,
   LogOut,
@@ -22,6 +23,7 @@ import {
   SquareStack,
   X,
 } from 'lucide-react';
+import { formatCombo, type Keybinding } from './keybindings';
 import { matchAny, type Match } from './search';
 import type { PowerAction, RecentFile } from './system';
 import { sortedWorkspaces, workspaceLabel, type WindowRow, type WmOutput } from './wmWindows';
@@ -32,10 +34,10 @@ import { sortedWorkspaces, workspaceLabel, type WindowRow, type WmOutput } from 
  * runs them.
  */
 
-export type Kind = 'app' | 'window' | 'system' | 'wm' | 'setting' | 'file' | 'web' | 'calc' | 'emoji' | 'clip';
+export type Kind = 'app' | 'window' | 'system' | 'wm' | 'setting' | 'keybinding' | 'file' | 'web' | 'calc' | 'emoji' | 'clip';
 
 /** Ties in score go to the kind listed first. */
-export const KIND_ORDER: Kind[] = ['calc', 'app', 'window', 'system', 'wm', 'setting', 'file', 'clip', 'emoji', 'web'];
+export const KIND_ORDER: Kind[] = ['calc', 'app', 'window', 'system', 'wm', 'setting', 'keybinding', 'file', 'clip', 'emoji', 'web'];
 
 export type Candidate<T> = { item: T; match: Match };
 
@@ -168,6 +170,18 @@ export const SETTINGS_PAGES: SettingsPage[] = [
 export const matchSettings = (query: string) =>
   filterMatches(SETTINGS_PAGES, query, (p) => [p.title, [...p.keywords, `${p.title} settings`, 'settings']]);
 
+/* ---- Keybindings ------------------------------------------------------------------------ */
+
+/**
+ * A keybinding matches on what it does and on its keys ("alt+shift+v" and
+ * "Alt+Shift+V"); "shortcut" or "keybinding" plus a word narrows to them.
+ */
+export const matchKeybindings = (items: Keybinding[], query: string) =>
+  filterMatches(items, query, (k) => [
+    k.label,
+    [...k.bindings, ...k.bindings.map(formatCombo), 'shortcut', 'keybinding', 'hotkey', `${k.label} shortcut`],
+  ]);
+
 /* ---- Recent files ----------------------------------------------------------------------- */
 
 export const matchRecentFiles = (files: RecentFile[], query: string) =>
@@ -180,4 +194,4 @@ export const parentFolder = (path: string) => path.replace(/[\\/][^\\/]*[\\/]?$/
 
 /* ---- Icons used by the view -------------------------------------------------------------- */
 
-export const ICONS = { window: AppWindow, setting: Settings, web: Globe };
+export const ICONS = { window: AppWindow, setting: Settings, web: Globe, keybinding: Keyboard };

@@ -1,5 +1,5 @@
 import { PhysicalPosition, PhysicalSize } from '@tauri-apps/api/dpi';
-import { currentMonitor } from '@tauri-apps/api/window';
+import { currentMonitor, primaryMonitor } from '@tauri-apps/api/window';
 import { currentWidget } from 'zebar';
 
 /**
@@ -33,6 +33,14 @@ async function readMonitor(): Promise<Monitor> {
 export function monitor(): Promise<Monitor> {
   monitorPromise ??= readMonitor();
   return monitorPromise;
+}
+
+/** Whether this widget window is on the primary monitor (the island's monitor). True outside Zebar. */
+export async function onPrimaryMonitor(): Promise<boolean> {
+  if (!tauriWindow()) return true;
+  const [mine, primary] = await Promise.all([currentMonitor(), primaryMonitor()]).catch(() => [null, null]);
+  if (!mine || !primary) return true;
+  return mine.position.x === primary.position.x && mine.position.y === primary.position.y;
 }
 
 /**

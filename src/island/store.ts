@@ -20,7 +20,11 @@ export type PanelId =
   | 'settings'
   | 'notifications'
   | 'windows'
-  | 'weather';
+  | 'weather'
+  | 'bar-settings'
+  | 'notify-settings'
+  | 'keybindings'
+  | 'rss';
 
 export const PANELS: readonly PanelId[] = [
   'control',
@@ -42,6 +46,10 @@ export const PANELS: readonly PanelId[] = [
   'notifications',
   'windows',
   'weather',
+  'bar-settings',
+  'notify-settings',
+  'keybindings',
+  'rss',
 ];
 
 /** Short-lived indicators shown when something changes. */

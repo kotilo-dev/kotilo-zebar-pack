@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { create } from 'zustand';
 import {
+  Activity,
   Bluetooth,
   BluetoothOff,
   CalendarDays,
@@ -26,12 +27,14 @@ import { STORED, writeStored } from '../shared/stored';
 import { DottedMeter, PanelHeader } from './components';
 import type { IslandOutputs } from './providers';
 import { useKeepFocused } from './panels';
+import { useIsland } from './store';
 import {
   audioSessions,
   bluetoothState,
   connectBluetooth,
   disconnectBluetooth,
   openBluetoothSettings,
+  openTaskManager,
   setBluetoothRadio,
   type BtDevice,
   type BtState,
@@ -575,6 +578,9 @@ export function SysmonView({ out, active }: { out: Out; active: boolean }) {
             Memory
           </button>
         </div>
+        <button className="chip-button task-manager" onClick={() => openTaskManagerAndClose()} title="Open Task Manager">
+          <Activity size={13} /> Task Manager
+        </button>
       </div>
       <div className="process-list">
         {!top && !error && <span className="muted-text">Measuring…</span>}
@@ -592,6 +598,12 @@ export function SysmonView({ out, active }: { out: Out; active: boolean }) {
       {error && <p className="panel-error ellipsis">{error}</p>}
     </div>
   );
+}
+
+/** Opens Task Manager and closes the island's panel, which would otherwise stay on top of it. */
+function openTaskManagerAndClose() {
+  useIsland.getState().closePanel();
+  void openTaskManager().catch((err) => console.warn('[kotilo] task manager', err));
 }
 
 /* ---- Calendar ---------------------------------------------------------------------- */

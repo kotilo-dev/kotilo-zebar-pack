@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { emit } from '@tauri-apps/api/event';
 import {
   ArrowDown,
@@ -14,6 +14,7 @@ import {
   Columns2,
   ListTodo,
   MicOff,
+  Music,
   Network,
   Rows2,
   Target,
@@ -27,15 +28,22 @@ import {
 } from 'lucide-react';
 import { createProviderGroup } from 'zebar';
 import type { BarItemId } from '../shared/barItems';
-import { Equalizer } from '../shared/Equalizer';
 import { KotiloMark } from '../shared/KotiloMark';
 import { formatDuration, POMODORO_LABEL, useNow, type SharedTimer } from '../shared/liveTimer';
 import { formatRate } from '../shared/netSpeed';
 import { STORED, useStored } from '../shared/stored';
+import {
+  DEFAULT_BAR_OPACITY,
+  DEFAULT_BAR_STYLE,
+  gapCss,
+  isBarOpacity,
+  isBarStyle,
+  type WmGaps,
+} from '../shared/barStyle';
 import { DEFAULT_WORKSPACE_STYLE, isWorkspaceStyle, workspaceText } from '../shared/workspaceStyle';
 import { openCount, type Todo } from '../shared/todos';
 import { useProviderGroup } from '../shared/useProviders';
-import { placeWindow } from '../shared/widgetWindow';
+import { onPrimaryMonitor, placeWindow } from '../shared/widgetWindow';
 
 const providers = createProviderGroup({
   glazewm: { type: 'glazewm' },
@@ -63,12 +71,34 @@ export function Bar() {
   // Items turned off in the island's settings panel.
   const hidden = useStored<BarItemId[]>(STORED.barHidden, []);
   const shown = (id: BarItemId) => !(Array.isArray(hidden) && hidden.includes(id));
+  // Look and background opacity, picked in the island's settings panel.
+  const storedStyle = useStored<unknown>(STORED.barStyle, DEFAULT_BAR_STYLE);
+  const style = isBarStyle(storedStyle) ? storedStyle : DEFAULT_BAR_STYLE;
+  const storedOpacity = useStored<unknown>(STORED.barOpacity, DEFAULT_BAR_OPACITY);
+  const opacity = isBarOpacity(storedOpacity) ? storedOpacity : DEFAULT_BAR_OPACITY;
+  // Floating and segments line their ends up with GlazeWM's outer gap (read by the island).
+  const gaps = useStored<WmGaps>(STORED.wmGaps, null);
+  const dpr = window.devicePixelRatio || 1;
+  const gapLeft = gapCss(gaps, 'left', dpr);
+  const gapRight = gapCss(gaps, 'right', dpr);
+  // See-through bar on the island's monitor: a hole under the island
+  // (centred on the screen, so shifted when the floating bar's gaps differ).
+  const islandWidth = useStored<number | null>(STORED.islandWidth, null);
+  const primary = useOnPrimaryMonitor();
+  const hole = opacity < 100 && style !== 'segments' && primary && typeof islandWidth === 'number';
+  const barVars = {
+    '--bar-bg': `color-mix(in srgb, var(--bg) ${opacity}%, transparent)`,
+    '--gap-left': `${gapLeft}px`,
+    '--gap-right': `${gapRight}px`,
+    '--hole-half': hole ? `${islandWidth / 2}px` : undefined,
+    '--hole-shift': style === 'floating' ? `${(gapRight - gapLeft) / 2}px` : '0px',
+  } as CSSProperties;
 
   // Size the window in CSS px so the bar is equally tall at any display scaling.
   useEffect(() => placeWindow(0, BAR_H, 'top-full'), []);
 
   return (
-    <div className="bar">
+    <div className={`bar style-${style} ${hole ? 'has-hole' : ''}`} style={barVars}>
       <div className="bar-side left">
         {/* The logo is the start button: it opens the island's app launcher. */}
         <button className="logo" onClick={() => openPanel('launcher')} title="Apps (Alt+E)">
@@ -93,6 +123,15 @@ export function Bar() {
       </div>
     </div>
   );
+}
+
+/** Whether the bar is on the primary monitor, where the island is. */
+function useOnPrimaryMonitor() {
+  const [primary, setPrimary] = useState(false);
+  useEffect(() => {
+    void onPrimaryMonitor().then(setPrimary);
+  }, []);
+  return primary;
 }
 
 function Workspaces({ out }: { out: Out }) {
@@ -180,7 +219,7 @@ function NowPlaying({ out }: { out: Out }) {
   const label = [session.title, session.artist].filter(Boolean).join(' · ');
   return (
     <button className="status now-playing" onClick={() => openPanel('control')} title={label || 'Now playing'}>
-      <Equalizer playing />
+      <Music size={14} />
       <span className="ellipsis">{session.title || 'Playing'}</span>
     </button>
   );

@@ -1,10 +1,9 @@
 import {
+  Activity,
   AlertTriangle,
   Bell,
   Bluetooth,
   BluetoothOff,
-  Battery,
-  BatteryCharging,
   CalendarClock,
   CheckCircle2,
   ClipboardList,
@@ -17,6 +16,7 @@ import {
   CloudRain,
   CloudSnow,
   CloudSun,
+  Rss,
   Info,
   Keyboard,
   ListTodo,
@@ -39,7 +39,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { WeatherStatus } from 'zebar';
-import { Equalizer } from '../shared/Equalizer';
+import { AlbumArt } from '../shared/AlbumArt';
 import { DottedMeter, isoWeek, MonthCalendar, monthName, Ring, Tile } from './components';
 import type { IslandOutputs } from './providers';
 import { BrightnessRow, QuickToggles, useTweaks } from './quickActions';
@@ -55,7 +55,13 @@ import {
   useBluetooth,
   useCalendar,
 } from './systemPanels';
-import { setBluetoothRadio } from './system';
+import { openTaskManager, setBluetoothRadio } from './system';
+
+/** Opens Task Manager and closes the island's panel, which would otherwise stay on top of it. */
+function openTaskManagerAndClose() {
+  useIsland.getState().closePanel();
+  void openTaskManager().catch((err) => console.warn('[kotilo] task manager', err));
+}
 
 type Out = IslandOutputs;
 
@@ -74,7 +80,9 @@ export function shapeFor(mode: IslandMode, out: Out): Shape {
       // The quick toggles row always; the brightness row only where the display
       // supports it (the island re-renders when that becomes known, see `Island`).
       const extra = 70 + (useTweaks.getState().state?.brightness != null ? 34 : 0);
-      return { w: 600, h: (out.media?.currentSession ? 676 : 572) + extra, r: 30, s: 22 };
+      // Heights fit the content with the same 26 px margin below as at the sides
+      // (the media card is 89 px plus a 14 px gap).
+      return { w: 600, h: (out.media?.currentSession ? 585 : 482) + extra, r: 30, s: 22 };
     }
     case 'power':
       return { w: 560, h: BAR_H + 128, r: 28, s: 20 };
@@ -107,7 +115,15 @@ export function shapeFor(mode: IslandMode, out: Out): Shape {
     case 'notifications':
       return { w: 560, h: BAR_H + 470, r: 30, s: 22 };
     case 'settings':
+      return { w: 500, h: BAR_H + 520, r: 30, s: 22 };
+    case 'bar-settings':
       return { w: 500, h: BAR_H + 592, r: 30, s: 22 };
+    case 'notify-settings':
+      return { w: 500, h: BAR_H + 470, r: 30, s: 22 };
+    case 'rss':
+      return { w: 560, h: BAR_H + 500, r: 30, s: 22 };
+    case 'keybindings':
+      return { w: 600, h: BAR_H + 600, r: 30, s: 22 };
     case 'windows':
       return { w: 560, h: BAR_H + 470, r: 30, s: 22 };
     case 'weather':
@@ -272,6 +288,9 @@ export function ControlView({ out }: { out: Out }) {
           <button onClick={() => openPanel('weather')} title="Weather">
             <CloudSun size={14} />
           </button>
+          <button onClick={() => openPanel('rss')} title="News">
+            <Rss size={14} />
+          </button>
         </span>
         <span>Control center</span>
         <span className="header-actions">
@@ -280,6 +299,9 @@ export function ControlView({ out }: { out: Out }) {
           </button>
           <button onClick={() => openPanel('tray')} title="Tray">
             <Ellipsis size={14} />
+          </button>
+          <button onClick={() => openTaskManagerAndClose()} title="Task Manager">
+            <Activity size={14} />
           </button>
           <button onClick={() => openPanel('settings')} title="Settings">
             <Settings size={14} />
@@ -364,18 +386,12 @@ export function ControlView({ out }: { out: Out }) {
           {out.weather && (
             <div className="weather clickable" role="button" title="Weather forecast" onClick={() => openPanel('weather')}>
               <span className="weather-temp">
-                <WeatherIcon size={18} className="accent" />
+                <WeatherIcon size={34} className="accent" />
                 {Math.round(out.weather.celsiusTemp)}°
               </span>
               <span className="weather-text">{weatherText}</span>
               <span className="weather-meta">Wind {Math.round(out.weather.windSpeed)} km/h</span>
             </div>
-          )}
-          {battery && (
-            <span className="today-meta battery-line">
-              {battery.isCharging ? <BatteryCharging size={13} /> : <Battery size={13} />}
-              {Math.round(battery.chargePercent)}%
-            </span>
           )}
         </div>
         <MonthCalendar today={now} onPick={(d) => openCalendar(d)} />
@@ -383,9 +399,7 @@ export function ControlView({ out }: { out: Out }) {
 
       {session && (
         <div className="media-card">
-          <div className="media-art">
-            <Equalizer playing={session.isPlaying} />
-          </div>
+          <AlbumArt session={session} className="media-art" size={26} />
           <div className="media-text">
             <strong className="ellipsis">{session.title ?? 'Unknown track'}</strong>
             <span className="ellipsis">{session.artist ?? ''}</span>
@@ -395,7 +409,7 @@ export function ControlView({ out }: { out: Out }) {
               <SkipBack size={16} />
             </button>
             <button className="primary" onClick={() => out.media?.togglePlayPause()} aria-label="Play or pause">
-              {session.isPlaying ? <Pause size={16} /> : <Play size={16} />}
+              {session.isPlaying ? <Pause size={18} /> : <Play size={18} />}
             </button>
             <button onClick={() => out.media?.next()} aria-label="Next">
               <SkipForward size={16} />

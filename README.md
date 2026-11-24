@@ -12,6 +12,8 @@ panels — all without leaving the keyboard.
 ## Features
 
 **Bar**
+- Full, floating or segmented bar with adjustable opacity; workspaces as numbers, dots, Roman numerals
+  or kanji.
 - GlazeWM workspaces, the tiling direction (click to flip), a button listing every window, and the
   focused window's title.
 - Live items on the right: now playing, running timer / Pomodoro / stopwatch, open tasks, notifications
@@ -29,6 +31,9 @@ panels — all without leaving the keyboard.
   top. Prefixes: `=` calculator and unit conversion (`=10 km to mi`, also without `=`), `:` emoji,
   `?` web search, `,` clipboard history.
 - **Windows:** every window on every workspace with its program icon; search, switch, close one or all.
+- **News:** stories from your RSS and Atom feeds, newest first, with a feed filter; a click opens the
+  story in your browser.
+- **Keybindings:** Kotilo's and GlazeWM's shortcuts in Settings; click one and press new keys to change it.
 - **Weather:** now, the next 24 hours and 7 days (rain chance, daily range, sunrise and sunset), from
   Open-Meteo for your approximate location.
 - **Panels:** Wi-Fi (join networks), Bluetooth (connect devices), sound devices, system monitor,
@@ -132,6 +137,8 @@ helpers over their standard input and are checked there.
 - **Appearance → window borders** writes two colour lines in your GlazeWM `config.yaml`. A backup
   (`config.yaml.bak-appearance`) is made before the first change; choosing the Kotilo theme restores the
   original lines.
+- **Settings → Keybindings** rewrites the `bindings:` line of the shortcut you change in GlazeWM's
+  `config.yaml` (same backup) and reloads GlazeWM's config.
 - **Appearance → wallpaper** sets the Windows wallpaper from `Pictures\Wallpapers`.
 - **Light/dark apps** switches the Windows app theme; **keep awake** blocks sleep while it is on.
 - Caches (app icons, wallpaper thumbnails) live in `%LOCALAPPDATA%\kotilo-zebar-pack`.
@@ -140,7 +147,8 @@ helpers over their standard input and are checked there.
   setting is on.
 - Network: Zebar's own weather and IP-location lookups; the weather panel's forecast request to
   Open-Meteo (approximate coordinates, at most every 15 minutes while the panel is open); and a web
-  search when you choose one in the launcher (it opens Google in your browser). Nothing else.
+  search when you choose one in the launcher (it opens Google in your browser); the RSS and Atom feeds
+  you add to the News panel (read when the panel opens, at most every 15 minutes). Nothing else.
 
 ## Known limits
 

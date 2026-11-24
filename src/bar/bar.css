@@ -4,10 +4,61 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 10px;
-  background: var(--bg);
+  background: var(--bar-bg, var(--bg));
   /* The island's outline continues this line around itself. */
   box-shadow: inset 0 -1px 0 var(--line);
   font-size: var(--text-sm);
+}
+
+/* Floating: one rounded bar inset from the screen edges, in the same window
+   height (3 px above and below), so GlazeWM's gap still fits. Its ends sit on
+   GlazeWM's outer gap, where the windows start and end (--gap-left/right). */
+.bar.style-floating {
+  height: calc(var(--bar-h) - 6px);
+  margin: 3px var(--gap-right) 3px var(--gap-left);
+  padding: 0 8px 0 4px;
+  border-radius: calc((var(--bar-h) - 6px) / 2);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+/* Segments: no bar behind; each side is its own pill. */
+.bar.style-segments {
+  padding: 0 var(--gap-right) 0 var(--gap-left);
+  background: transparent;
+  box-shadow: none;
+}
+
+.bar.style-segments .bar-side {
+  height: calc(var(--bar-h) - 6px);
+  padding: 0 10px 0 4px;
+  border-radius: calc((var(--bar-h) - 6px) / 2);
+  background: var(--bar-bg, var(--bg));
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.bar.style-segments .bar-side.right {
+  padding: 0 10px;
+}
+
+/* A see-through floating bar leaves out the part under the resting island's
+   notch (which has the same opacity), so the two layers do not add up to a
+   darker block; the notch's own side lines hide the edges of the hole. */
+.bar.style-floating.has-hole {
+  --hole-l: calc(50% + var(--hole-shift) - var(--hole-half));
+  --hole-r: calc(50% + var(--hole-shift) + var(--hole-half));
+  mask-image: linear-gradient(to right, #000 var(--hole-l), transparent var(--hole-l), transparent var(--hole-r), #000 var(--hole-r));
+}
+
+/* A see-through full bar keeps its strip (the island paints only what hangs
+   below the line) and cuts its bottom line where the island's outline takes over. */
+.bar.style-full.has-hole {
+  --hole-l: calc(50% - var(--hole-half));
+  --hole-r: calc(50% + var(--hole-half));
+  box-shadow: none;
+  background:
+    linear-gradient(to right, var(--line) var(--hole-l), transparent var(--hole-l), transparent var(--hole-r), var(--line) var(--hole-r))
+      bottom / 100% 1px no-repeat,
+    var(--bar-bg);
 }
 
 .bar-side {

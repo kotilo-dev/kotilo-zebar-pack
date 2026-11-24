@@ -8,6 +8,7 @@ import {
   filterMatches,
   ICONS,
   KIND_ORDER,
+  matchKeybindings,
   matchRecentFiles,
   matchSettings,
   matchWindows,
@@ -16,6 +17,7 @@ import {
   wmCommands,
   type Kind,
 } from './launcherSources';
+import { formatCombo, useKeybindings } from './keybindings';
 import { appIconCache, loadAppIcons, useKeepFocused } from './panels';
 import type { IslandOutputs } from './providers';
 import { fold, frecency, frecencyBonus, match, remember } from './search';
@@ -75,6 +77,8 @@ const RECENT_MAX_AGE = 2 * 60_000;
  */
 export function LauncherView({ out, active }: { out: IslandOutputs; active: boolean }) {
   const closePanel = useIsland((s) => s.closePanel);
+  const openPanel = useIsland((s) => s.openPanel);
+  const keybindings = useKeybindings((k) => k.items);
   const showBanner = useIsland((s) => s.showBanner);
   const wm = out.glazewm;
   const [apps, setApps] = useState<StartApp[] | null>(appCache);
@@ -97,6 +101,8 @@ export function LauncherView({ out, active }: { out: IslandOutputs; active: bool
     setArmed(null);
     setClips(null);
     setIcons(appIconCache());
+    // GlazeWM's keybindings, for searching them; read once, then after each change on the Keybindings page.
+    if (!useKeybindings.getState().items) void useKeybindings.getState().load();
     const now = Date.now();
     if (!appCache || now - appsReadAt > APPS_MAX_AGE) {
       appsReadAt = now;
@@ -355,6 +361,39 @@ export function LauncherView({ out, active }: { out: IslandOutputs; active: bool
     }
 
     if (q.length >= 2) {
+      // The Keybindings page itself, then the keybindings, which open that page filtered to the one chosen.
+      for (const { match: m } of filterMatches([0], q, () => ['Keybindings', ['shortcuts', 'hotkeys', 'keyboard shortcuts', 'glazewm keys']])) {
+        all.push({
+          key: 'kotilo:keybindings',
+          kind: 'setting',
+          title: 'Keybindings',
+          at: m.at,
+          sub: 'Kotilo settings',
+          icon: { Icon: ICONS.keybinding },
+          hint: 'Open ↵',
+          score: m.score,
+          run: () => {
+            useKeybindings.getState().setFilter('');
+            openPanel('keybindings');
+          },
+        });
+      }
+      for (const { item: k, match: m } of matchKeybindings(keybindings ?? [], q)) {
+        all.push({
+          key: `keybinding:${k.line}`,
+          kind: 'keybinding',
+          title: k.label,
+          at: m.at,
+          sub: `${k.bindings.map(formatCombo).join(' · ')} · ${k.owner === 'kotilo' ? 'Kotilo' : 'GlazeWM'} shortcut`,
+          icon: { Icon: ICONS.keybinding },
+          hint: 'Edit ↵',
+          score: m.score - 5,
+          run: () => {
+            useKeybindings.getState().setFilter(k.label);
+            openPanel('keybindings');
+          },
+        });
+      }
       for (const { item: file, match: m } of matchRecentFiles(recent, q)) {
         all.push({
           key: `file:${file.lnk}`,
@@ -386,7 +425,7 @@ export function LauncherView({ out, active }: { out: IslandOutputs; active: bool
       });
     }
     return top;
-  }, [mode, text, apps, icons, windows, windowIcons, recent, clips, wm]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mode, text, apps, icons, windows, windowIcons, recent, clips, wm, keybindings]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const current = Math.min(selected, results.length - 1);
 
