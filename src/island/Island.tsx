@@ -21,6 +21,7 @@ import { NotesView } from './notesPanel';
 import { BarSettingsView, NotificationSettingsView, SettingsView } from './settingsPanel';
 import { KeybindingsView } from './keybindingsPanel';
 import { RssView } from './rssPanel';
+import { FilesView } from './filesPanel';
 import { NotificationsView } from './notificationsPanel';
 import { WindowsView } from './windowsPanel';
 import { WeatherView } from './weatherPanel';
@@ -239,6 +240,9 @@ export function Island() {
         </View>
         <View name="rss" mode={mode} winWidth={winWidth} out={out}>
           <RssView active={mode === 'rss'} />
+        </View>
+        <View name="files" mode={mode} winWidth={winWidth} out={out}>
+          <FilesView active={mode === 'files'} />
         </View>
         <View name="notifications" mode={mode} winWidth={winWidth} out={out}>
           <NotificationsView active={mode === 'notifications'} />

@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- **Added:** a Files panel (folder button in the control centre's top left): it starts with your main
+  folders and drives, a click goes into a folder and Up (or Backspace) goes back. Each row can open the
+  item (a folder in File Explorer, a file in its default app), copy the file itself to paste in File
+  Explorer, or copy its path. Hidden and system files are not listed.
+- **Changed:** the Clipboard button moved to the right-hand group of the control centre's header.
+
 ## 0.3.0 — 2026-11-24
 
 - **Added:** a News panel (RSS button in the control centre's top left): stories from your RSS and Atom

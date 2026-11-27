@@ -44,7 +44,8 @@ type Script =
   | 'recent'
   | 'window-icons'
   | 'media-art'
-  | 'rss';
+  | 'rss'
+  | 'files';
 
 const scriptArgs = (name: Script) => [
   '-NoProfile',
@@ -644,3 +645,45 @@ export const fetchFeed = (url: string) =>
 
 /** Opens a story in the default browser; the helper accepts http and https links only. */
 export const openFeedLink = (url: string) => rss.request(`open ${hex(url)}`);
+
+/* ---- Files (scripts/files.ps1: folder listing, copying a file or its path) ---- */
+
+const files = lineHelper('files', 15_000, HELPER_IDLE_MS);
+
+export type FileEntry = {
+  name: string;
+  path: string;
+  /** `place` and `drive` appear only at the top (no path), next to each other. */
+  kind: 'place' | 'drive' | 'folder' | 'file';
+  /** Bytes for files, free bytes for drives. */
+  size: number | null;
+  /** Last change, ms since epoch. */
+  time: number | null;
+};
+
+export type FolderListing = {
+  /** null for the top: the user's main folders and the drives. */
+  path: string | null;
+  parent: string | null;
+  /** Entries in the folder; more than `items` when the list was cut. */
+  total: number;
+  items: FileEntry[];
+};
+
+/** Lists a folder, or the top (main folders and drives) for null. */
+export const listFolder = (path: string | null) =>
+  files
+    .request<Partial<FolderListing>>(path ? `list ${hex(path)}` : 'list')
+    .then((a): FolderListing => ({
+      path: a.path ?? null,
+      parent: a.parent ?? null,
+      items: a.items ?? [],
+      total: a.total ?? a.items?.length ?? 0,
+    }));
+
+/** Puts a file or folder on the clipboard, ready to paste in File Explorer. */
+export const copyFileToClipboard = (path: string) => files.request(`copy ${hex(path)}`).then(() => {});
+/** Opens a folder in File Explorer or a file in its default app. */
+export const openFileEntry = (path: string) => files.request(`open ${hex(path)}`).then(() => {});
+/** Puts a path on the clipboard as text. */
+export const copyPathToClipboard = (path: string) => files.request(`copy-path ${hex(path)}`).then(() => {});

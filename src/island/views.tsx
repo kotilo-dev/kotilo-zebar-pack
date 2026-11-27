@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   ClipboardList,
   Ellipsis,
+  Folder,
   Settings,
   Cloud,
   CloudDrizzle,
@@ -93,6 +94,8 @@ export function shapeFor(mode: IslandMode, out: Out): Shape {
       return { w: 620, h: BAR_H + 470, r: 30, s: 22 };
     case 'clipboard':
       return { w: 560, h: BAR_H + 440, r: 30, s: 22 };
+    case 'files':
+      return { w: 600, h: BAR_H + 480, r: 30, s: 22 };
     case 'tray':
       return { w: 480, h: BAR_H + 44 + trayRows(out.systray?.icons.length ?? 0) * 46, r: 28, s: 20 };
     case 'audio':
@@ -274,8 +277,8 @@ export function ControlView({ out }: { out: Out }) {
       <header className="control-header">
         {/* Left: the pack's own tools. Right: system and Windows things. */}
         <span className="header-actions start">
-          <button onClick={() => openPanel('clipboard')} title="Clipboard (Alt+Shift+V)">
-            <ClipboardList size={14} />
+          <button onClick={() => openPanel('files')} title="Files">
+            <Folder size={14} />
           </button>
           <button onClick={() => openPanel('todo')} title="To-do">
             <ListTodo size={14} />
@@ -295,6 +298,9 @@ export function ControlView({ out }: { out: Out }) {
         </span>
         <span>Control center</span>
         <span className="header-actions">
+          <button onClick={() => openPanel('clipboard')} title="Clipboard (Alt+Shift+V)">
+            <ClipboardList size={14} />
+          </button>
           <button onClick={() => openPanel('notifications')} title="Notifications">
             <Bell size={14} />
           </button>

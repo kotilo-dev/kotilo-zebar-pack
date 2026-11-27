@@ -2431,6 +2431,63 @@ button.header-back:hover {
 
 /* ---- Launcher: two-line results, confirmations, emoji ---------------------- */
 
+/* ---- Files: folder browser with copy-file and copy-path buttons on each row -- */
+
+.view-panel.files {
+  min-height: 0;
+  gap: 10px;
+}
+
+.files .results {
+  gap: 2px;
+}
+
+.files-path {
+  flex: none;
+  padding: 0 4px;
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+.file-item {
+  flex: none;
+  cursor: default;
+}
+
+.file-item.opens {
+  cursor: pointer;
+}
+
+.file-actions {
+  margin-left: auto;
+  margin-right: -6px;
+  flex: none;
+  display: flex;
+  gap: 2px;
+}
+
+.file-action {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--muted);
+}
+
+.file-action:hover {
+  background: var(--surface-2);
+  color: var(--accent);
+}
+
+.file-item.selected .file-action {
+  color: var(--accent-ink);
+}
+
+.file-item.selected .file-action:hover {
+  background: var(--accent-ink-soft);
+}
+
 .result-text {
   min-width: 0;
   display: flex;

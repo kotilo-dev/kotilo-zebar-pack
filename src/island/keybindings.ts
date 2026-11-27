@@ -30,6 +30,7 @@ const PANEL_NAMES: Partial<Record<PanelId, string>> = {
   todo: 'To-do',
   notes: 'Notes',
   rss: 'News',
+  files: 'Files',
 };
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
