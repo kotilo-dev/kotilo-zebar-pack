@@ -18,6 +18,13 @@
 #   gaps                             -> {"ok":true,"top":48,"right":8,"left":8,"scaleWithDpi":true}
 #                                       (GlazeWM's outer gap in px, read only; a side that is not
 #                                       given in px is null; the floating bar lines up with it)
+#   glaze-settings                   -> {"ok":true,"path":"<config>","values":{"<path>":value|null,..},
+#                                       "colours":{..},"workspaces":[..],"rules":[..],"commands":{..}}
+#                                       (the settings in $GlazeSettings; lists are read only)
+#   set-glaze-setting <path> <hexValue>
+#                                    -> {"ok":true,"changed":true|false}  rewrites the value on that
+#                                       setting's line; only paths in $GlazeSettings, typed values
+#   open-glaze-config                -> {"ok":true}  opens the config in the .yaml editor (or Notepad)
 # Errors are {"ok":false,"error":"..."}; the loop keeps running.
 #
 # <hexFileName> / <hexFullPath> are the UTF-8 bytes of the name, hex-encoded, so
@@ -457,6 +464,221 @@ function Set-Keybinding([int]$lineIndex, [string[]]$expected, [string[]]$binding
   @{ ok = $true; changed = $true }
 }
 
+# ---------- other GlazeWM settings ----------
+
+# The settings the island may change, by path, with their type:
+#   bool, px (a size in pixels, 0-200), pct (an opacity, 0-100), or the allowed words separated by '|'.
+# Nothing outside this list is ever written.
+$GlazeSettings = [ordered]@{
+  'general.focus_follows_cursor'                              = 'bool'
+  'general.toggle_workspace_on_refocus'                       = 'bool'
+  'general.cursor_jump.enabled'                               = 'bool'
+  'general.cursor_jump.trigger'                               = 'monitor_focus|window_focus'
+  'general.hide_method'                                       = 'cloak|hide'
+  'general.show_all_in_taskbar'                               = 'bool'
+  'gaps.scale_with_dpi'                                       = 'bool'
+  'gaps.inner_gap'                                            = 'px'
+  'gaps.outer_gap.top'                                        = 'px'
+  'gaps.outer_gap.right'                                      = 'px'
+  'gaps.outer_gap.bottom'                                     = 'px'
+  'gaps.outer_gap.left'                                       = 'px'
+  'window_effects.focused_window.border.enabled'              = 'bool'
+  'window_effects.focused_window.hide_title_bar.enabled'      = 'bool'
+  'window_effects.focused_window.corner_style.enabled'        = 'bool'
+  'window_effects.focused_window.corner_style.style'          = 'square|rounded|small_rounded'
+  'window_effects.focused_window.transparency.enabled'        = 'bool'
+  'window_effects.focused_window.transparency.opacity'        = 'pct'
+  'window_effects.other_windows.border.enabled'               = 'bool'
+  'window_effects.other_windows.hide_title_bar.enabled'       = 'bool'
+  'window_effects.other_windows.corner_style.enabled'         = 'bool'
+  'window_effects.other_windows.corner_style.style'           = 'square|rounded|small_rounded'
+  'window_effects.other_windows.transparency.enabled'         = 'bool'
+  'window_effects.other_windows.transparency.opacity'         = 'pct'
+  'window_behavior.initial_state'                             = 'tiling|floating'
+  'window_behavior.state_defaults.floating.centered'          = 'bool'
+  'window_behavior.state_defaults.floating.shown_on_top'      = 'bool'
+  'window_behavior.state_defaults.fullscreen.maximized'       = 'bool'
+  'window_behavior.state_defaults.fullscreen.shown_on_top'    = 'bool'
+}
+
+# A scalar line: key, optional quote, the value, the same quote, an optional comment.
+$ScalarLine = '^(\s*[a-z_]+\s*:\s*)(["'']?)([^"''#\s]+)\2(\s*(?:#.*)?)(\r?\n?)$'
+
+# Line index of the top-level section `<name>:`; $null unless exactly one.
+function Find-Top($lines, [string]$name) {
+  $hits = @(for ($i = 0; $i -lt $lines.Count; $i++) { if ($lines[$i] -match "^$([regex]::Escape($name))\s*:(\s|$)") { $i } })
+  if ($hits.Count -ne 1) { return $null }
+  $hits[0]
+}
+
+# Line index of a dotted path such as gaps.outer_gap.top; $null when it is missing or ambiguous.
+function Find-Path($lines, [string]$path) {
+  $keys = $path -split '\.'
+  $at = Find-Top $lines $keys[0]
+  for ($k = 1; $k -lt $keys.Count -and $null -ne $at; $k++) {
+    $at = Find-Child $lines ($at + 1) (Get-BlockEnd $lines $at) (Get-Indent $lines[$at]) $keys[$k]
+  }
+  $at
+}
+
+# The value of one setting from its line, as the island sees it ($null when unreadable).
+function ConvertFrom-SettingLine([string]$line, [string]$type) {
+  $m = [regex]::Match($line, $ScalarLine)
+  if (-not $m.Success) { return $null }
+  $v = $m.Groups[3].Value
+  switch ($type) {
+    'bool' { if ($v -eq 'true') { return $true } elseif ($v -eq 'false') { return $false } else { return $null } }
+    'px' { if ($v -match '^(\d+(?:\.\d+)?)(px)?$') { return [double]$Matches[1] } else { return $null } }
+    'pct' {
+      if ($v -match '^(\d+(?:\.\d+)?)%$') { return [double]$Matches[1] }
+      if ($v -match '^(0(?:\.\d+)?|1(?:\.0+)?)$') { return [math]::Round([double]$v * 100) }
+      return $null
+    }
+    default { if (($type -split '\|') -ccontains $v) { return $v } else { return $null } }
+  }
+}
+
+# A one-line YAML flow list, or the raw text after the key when it is not one.
+function Get-ListValue($lines, [string]$path) {
+  $i = Find-Path $lines $path
+  if ($null -eq $i) { return $null }
+  $raw = ($lines[$i] -replace '^\s*[a-z_]+\s*:', '')
+  $list = ConvertFrom-FlowList $raw
+  if ($null -ne $list) { return , @($list) }
+  , @(($raw -replace '\s+#.*$', '').Trim())
+}
+
+# The items of a top-level list: each one as its content lines without comments,
+# the first line without its '- '. Returns @() when the section is missing.
+function Get-TopListItems($lines, [string]$name) {
+  $top = Find-Top $lines $name
+  if ($null -eq $top) { return , @() }
+  $end = Get-BlockEnd $lines $top
+  $items = New-Object System.Collections.ArrayList
+  $itemIndent = -1
+  $current = $null
+  for ($i = $top + 1; $i -lt $end; $i++) {
+    if (-not (Test-Content $lines[$i])) { continue }
+    $ind = Get-Indent $lines[$i]
+    $text = $lines[$i].Trim()
+    if ($text.StartsWith('- ') -and ($itemIndent -lt 0 -or $ind -eq $itemIndent)) {
+      $itemIndent = $ind
+      $current = New-Object System.Collections.ArrayList
+      [void]$items.Add($current)
+      $text = $text.Substring(2).Trim()
+    }
+    if ($null -ne $current) { [void]$current.Add(@{ indent = $ind; text = $text }) }
+  }
+  , $items
+}
+
+function Get-ScalarText([string]$text) { ($text -replace '^[a-z_]+\s*:\s*', '' -replace '\s+#.*$', '').Trim().Trim('"', "'") }
+
+function Get-GlazeSettings {
+  $cfg = Read-GlazeLines
+  $lines = $cfg.lines
+  $values = [ordered]@{}
+  foreach ($path in $GlazeSettings.Keys) {
+    $i = Find-Path $lines $path
+    $values[$path] = if ($null -eq $i) { $null } else { ConvertFrom-SettingLine $lines[$i] $GlazeSettings[$path] }
+  }
+  $colours = [ordered]@{}
+  foreach ($section in 'focused_window', 'other_windows') {
+    $i = Find-Path $lines "window_effects.$section.border.color"
+    $colours[$section] = if ($null -ne $i -and $lines[$i] -match '(#[0-9a-fA-F]{6})') { $Matches[1] } else { $null }
+  }
+  $workspaces = @(foreach ($item in (Get-TopListItems $lines 'workspaces')) {
+      $w = [ordered]@{ name = $null; displayName = $null; monitor = $null }
+      foreach ($l in $item) {
+        if ($l.text -match '^name\s*:') { $w.name = Get-ScalarText $l.text }
+        elseif ($l.text -match '^display_name\s*:') { $w.displayName = Get-ScalarText $l.text }
+        elseif ($l.text -match '^bind_to_monitor\s*:') { $w.monitor = Get-ScalarText $l.text }
+      }
+      $w
+    })
+  # A rule: its commands and its match groups (each `- ...` under match:, with its continuation lines).
+  $rules = @(foreach ($item in (Get-TopListItems $lines 'window_rules')) {
+      $r = [ordered]@{ commands = @(); match = @() }
+      $matchIndent = -1
+      $groups = New-Object System.Collections.ArrayList
+      foreach ($l in $item) {
+        if ($l.text -match '^commands\s*:(.*)$') {
+          $list = ConvertFrom-FlowList $Matches[1]
+          # Assigned inside the branches: an `if` expression would unroll a one-item list into a string.
+          if ($null -ne $list) { $r.commands = @($list) } else { $r.commands = @(Get-ScalarText $l.text) }
+        } elseif ($l.text -match '^match\s*:') { $matchIndent = $l.indent }
+        elseif ($matchIndent -ge 0 -and $l.indent -gt $matchIndent) {
+          if ($l.text.StartsWith('- ')) { [void]$groups.Add($l.text.Substring(2).Trim()) }
+          elseif ($groups.Count -gt 0) { $groups[$groups.Count - 1] += " and $($l.text)" }
+        } else { $matchIndent = -1 }
+      }
+      $r.match = @($groups)
+      $r
+    })
+  [ordered]@{
+    ok         = $true
+    path       = $GlazeConfig
+    values     = $values
+    colours    = $colours
+    workspaces = $workspaces
+    rules      = $rules
+    commands   = [ordered]@{
+      startup  = Get-ListValue $lines 'general.startup_commands'
+      shutdown = Get-ListValue $lines 'general.shutdown_commands'
+      reload   = Get-ListValue $lines 'general.config_reload_commands'
+    }
+  }
+}
+
+# Writes one setting from the list above. Only the value on its existing line
+# changes; indent, quotes, comment and line ending stay. A setting that is not in
+# the config is not added.
+function Set-GlazeSetting([string]$path, [string]$value) {
+  if (-not $GlazeSettings.Contains($path)) { throw "Unknown setting '$path'" }
+  $type = $GlazeSettings[$path]
+  $cfg = Read-GlazeLines
+  $lines = $cfg.lines
+  $i = Find-Path $lines $path
+  if ($null -eq $i) { throw 'That setting is not in the config' }
+  $m = [regex]::Match($lines[$i], $ScalarLine)
+  if (-not $m.Success) { throw 'Unexpected format of the setting line' }
+  $old = $m.Groups[3].Value
+  $text = switch ($type) {
+    'bool' { if ($value -cnotmatch '^(true|false)$') { throw 'Expected true or false' }; $value }
+    'px' {
+      if ($value -notmatch '^\d{1,3}$' -or [int]$value -gt 200) { throw 'Expected a size from 0 to 200 px' }
+      if ($old -match '^\d+(\.\d+)?$') { $value } else { "${value}px" }
+    }
+    'pct' {
+      if ($value -notmatch '^\d{1,3}$' -or [int]$value -gt 100) { throw 'Expected a percentage from 0 to 100' }
+      "$value%"
+    }
+    default { if (-not (($type -split '\|') -ccontains $value)) { throw "Expected one of: $($type -replace '\|', ', ')" }; $value }
+  }
+  # A value starting with a digit and ending in % or px reads as a string anyway; keep the original quoting.
+  $q = $m.Groups[2].Value
+  $new = $m.Groups[1].Value + $q + $text + $q + $m.Groups[4].Value + $m.Groups[5].Value
+  if ($new -ceq $lines[$i]) { return @{ ok = $true; changed = $false } }
+  if (Test-DryRun) {
+    return @{ ok = $true; dryRun = $true; changed = $true; wouldDo = "line $($i + 1): '$($lines[$i].TrimEnd("`r", "`n"))' -> '$($new.TrimEnd("`r", "`n"))'" }
+  }
+  $lines[$i] = $new
+  Save-GlazeLines $lines $cfg.bom
+  @{ ok = $true; changed = $true }
+}
+
+# Opens the config with the app chosen for .yaml files, or Notepad when there is none
+# (Windows would otherwise ask which app to use). The path is fixed; nothing comes from the UI.
+function Open-GlazeConfig {
+  if (-not (Test-Path -LiteralPath $GlazeConfig -PathType Leaf)) { throw 'GlazeWM config not found' }
+  $choice = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.yaml\UserChoice'
+  $hasApp = (Test-Path $choice) -or (Test-Path 'Registry::HKEY_CLASSES_ROOT\.yaml')
+  if (Test-DryRun) { return @{ ok = $true; dryRun = $true; wouldDo = $(if ($hasApp) { "open $GlazeConfig" } else { "notepad $GlazeConfig" }) } }
+  if ($hasApp) { Invoke-Item -LiteralPath $GlazeConfig }
+  else { Start-Process -FilePath 'notepad.exe' -ArgumentList "`"$GlazeConfig`"" }
+  @{ ok = $true }
+}
+
 # ---------- request loop ----------
 
 function Invoke-Request([string]$line) {
@@ -489,6 +711,12 @@ function Invoke-Request([string]$line) {
       $expected = ConvertFrom-HexUtf8 $parts[2] | ConvertFrom-Json
       $bindings = ConvertFrom-HexUtf8 $parts[3] | ConvertFrom-Json
       return Set-Keybinding ([int]$parts[1]) ([string[]]$expected) ([string[]]$bindings)
+    }
+    'glaze-settings' { return Get-GlazeSettings }
+    'open-glaze-config' { return Open-GlazeConfig }
+    'set-glaze-setting' {
+      if ($parts.Count -ne 3 -or $parts[1] -notmatch '^[a-z_.]{1,80}$') { return @{ ok = $false; error = 'Usage: set-glaze-setting <path> <hexValue>' } }
+      return Set-GlazeSetting $parts[1] (ConvertFrom-HexUtf8 $parts[2])
     }
     default { return @{ ok = $false; error = "Unknown request '$($parts[0])'" } }
   }

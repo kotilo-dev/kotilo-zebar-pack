@@ -20,6 +20,7 @@ import { TodoView } from './todoPanel';
 import { NotesView } from './notesPanel';
 import { BarSettingsView, NotificationSettingsView, SettingsView } from './settingsPanel';
 import { KeybindingsView } from './keybindingsPanel';
+import { GlazeSettingsView } from './glazePanel';
 import { RssView } from './rssPanel';
 import { FilesView } from './filesPanel';
 import { NotificationsView } from './notificationsPanel';
@@ -237,6 +238,9 @@ export function Island() {
         </View>
         <View name="keybindings" mode={mode} winWidth={winWidth} out={out}>
           <KeybindingsView out={out} active={mode === 'keybindings'} />
+        </View>
+        <View name="wm-settings" mode={mode} winWidth={winWidth} out={out}>
+          <GlazeSettingsView out={out} active={mode === 'wm-settings'} />
         </View>
         <View name="rss" mode={mode} winWidth={winWidth} out={out}>
           <RssView active={mode === 'rss'} />

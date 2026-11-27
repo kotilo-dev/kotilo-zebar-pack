@@ -119,13 +119,15 @@ export function shapeFor(mode: IslandMode, out: Out): Shape {
     case 'notifications':
       return { w: 560, h: BAR_H + 470, r: 30, s: 22 };
     case 'settings':
-      return { w: 500, h: BAR_H + 520, r: 30, s: 22 };
+      return { w: 500, h: BAR_H + 600, r: 30, s: 22 };
     case 'bar-settings':
       return { w: 500, h: BAR_H + 592, r: 30, s: 22 };
     case 'notify-settings':
       return { w: 500, h: BAR_H + 470, r: 30, s: 22 };
     case 'rss':
       return { w: 560, h: BAR_H + 500, r: 30, s: 22 };
+    case 'wm-settings':
+      return { w: 560, h: BAR_H + 600, r: 30, s: 22 };
     case 'keybindings':
       return { w: 600, h: BAR_H + 600, r: 30, s: 22 };
     case 'windows':

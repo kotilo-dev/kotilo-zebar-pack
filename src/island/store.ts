@@ -24,6 +24,7 @@ export type PanelId =
   | 'bar-settings'
   | 'notify-settings'
   | 'keybindings'
+  | 'wm-settings'
   | 'rss'
   | 'files';
 
@@ -50,6 +51,7 @@ export const PANELS: readonly PanelId[] = [
   'bar-settings',
   'notify-settings',
   'keybindings',
+  'wm-settings',
   'rss',
   'files',
 ];

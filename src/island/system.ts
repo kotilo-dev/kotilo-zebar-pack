@@ -454,6 +454,38 @@ export const setKeybinding = (k: WmKeybinding, bindings: string[]) =>
 export const glazeGaps = () =>
   appearance.request<{ left: number | null; right: number | null; scaleWithDpi: boolean }>('gaps');
 
+/** A setting's value as GlazeWM's config holds it; null when it is not in the config or unreadable. */
+export type GlazeValue = boolean | number | string | null;
+
+/** GlazeWM's other settings (not the keybindings), read from its config. */
+export type GlazeConfig = {
+  /** The config file's full path. */
+  path: string;
+  /** The settings the island may change, by dotted path (see $GlazeSettings in appearance.ps1). */
+  values: Record<string, GlazeValue>;
+  colours: { focused_window: string | null; other_windows: string | null };
+  workspaces: { name: string | null; displayName: string | null; monitor: string | null }[];
+  rules: { commands: string[]; match: string[] }[];
+  commands: { startup: string[] | null; shutdown: string[] | null; reload: string[] | null };
+};
+
+export const glazeSettings = () =>
+  appearance.request<GlazeConfig>('glaze-settings').then((a) => ({
+    ...a,
+    workspaces: a.workspaces ?? [],
+    rules: (a.rules ?? []).map((r) => ({ commands: r.commands ?? [], match: r.match ?? [] })),
+  }));
+
+/**
+ * Writes one setting to GlazeWM's config (only the value on its line; the
+ * helper refuses a path or value it does not know). The caller reloads GlazeWM.
+ */
+export const setGlazeSetting = (path: string, value: boolean | number | string) =>
+  appearance.request<{ changed: boolean }>(`set-glaze-setting ${path} ${hex(String(value))}`).then((a) => a.changed);
+
+/** Opens GlazeWM's config in the default editor for .yaml files (Notepad when there is none). */
+export const openGlazeConfig = () => appearance.request('open-glaze-config');
+
 /** Writes the two GlazeWM border colours to its config (only those two lines). `changed` is false if they already matched. */
 export const setBorderColors = (focused: string, other: string) =>
   appearance.request<{ changed: boolean }>(`borders ${focused} ${other}`).then((a) => a.changed);

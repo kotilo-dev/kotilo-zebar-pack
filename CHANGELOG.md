@@ -10,6 +10,11 @@
   as in the Start menu. The selected app shows the shortcut next to "Open", and "Run as admin" while both
   keys are held. Windows asks for consent (UAC), or your company's elevation tool (such as Admin By
   Request) does; Store apps, which cannot run elevated, get a note instead.
+- **Added:** Settings › Window manager shows GlazeWM's other settings from its config. Switches, choices
+  and sizes can be changed there (focus follows cursor, cursor jump, hide method, gaps, borders, title bars,
+  corner style, transparency, how new windows open); GlazeWM reloads its config at once. Workspaces, window
+  rules and startup commands are listed as they are, with a button that opens the config file. Only the
+  changed value's line is rewritten, and a setting missing from the config is shown but not added.
 - **Changed:** the Clipboard button moved to the right-hand group of the control centre's header.
 
 ## 0.3.0 — 2026-11-24

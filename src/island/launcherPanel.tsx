@@ -391,6 +391,19 @@ export function LauncherView({ out, active }: { out: IslandOutputs; active: bool
           },
         });
       }
+      for (const { match: m } of filterMatches([0], q, () => ['Window manager', ['glazewm settings', 'gaps', 'window effects', 'window rules', 'workspaces config']])) {
+        all.push({
+          key: 'kotilo:wm-settings',
+          kind: 'setting',
+          title: 'Window manager',
+          at: m.at,
+          sub: 'Kotilo settings · GlazeWM',
+          icon: { Icon: ICONS.setting },
+          hint: 'Open ↵',
+          score: m.score,
+          run: () => openPanel('wm-settings'),
+        });
+      }
       for (const { item: k, match: m } of matchKeybindings(keybindings ?? [], q)) {
         all.push({
           key: `keybinding:${k.line}`,

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { Bell, ChevronRight, ExternalLink, Keyboard, Monitor, PanelTop, Palette } from 'lucide-react';
+import { Bell, ChevronRight, ExternalLink, Keyboard, LayoutGrid, Monitor, PanelTop, Palette } from 'lucide-react';
 import { version } from '../../zpack.json';
 import { BAR_ITEMS, type BarItemId } from '../shared/barItems';
 import { KotiloMark } from '../shared/KotiloMark';
@@ -68,6 +68,7 @@ export function SettingsView() {
       <SettingsLink icon={<PanelTop size={16} />} title="Bar & workspaces" sub="Bar style, opacity, workspace numbers, bar items" panel="bar-settings" />
       <SettingsLink icon={<Bell size={16} />} title="Notifications" sub="Which apps the island shows" panel="notify-settings" />
       <SettingsLink icon={<Keyboard size={16} />} title="Keybindings" sub="Kotilo's and GlazeWM's shortcuts" panel="keybindings" />
+      <SettingsLink icon={<LayoutGrid size={16} />} title="Window manager" sub="GlazeWM gaps, window effects and behavior" panel="wm-settings" />
 
       <h3 className="section-title settings-section">System</h3>
       <button
