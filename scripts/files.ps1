@@ -14,8 +14,6 @@
 # system entries are left out, as Explorer does by default.
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-Add-Type -AssemblyName System.Windows.Forms
-
 $MaxItems = 500
 
 function ConvertFrom-HexUtf8([string]$hex) {
@@ -71,11 +69,46 @@ function Get-Folder([string]$path) {
   @{ ok = $true; path = $dir.FullName; parent = $parent; total = $entries.Count; items = @($list) }
 }
 
+# Writes the clipboard from a short-lived STA thread. The thread that sets the
+# clipboard stays its owner; this script's main thread sits in ReadLine and never
+# answers window messages, and File Explorer could not paste files from it. A
+# thread that ends hands the clipboard over, rendered and without an owner.
+function Invoke-ClipboardThread([scriptblock]$action, [string]$value) {
+  $runspace = [runspacefactory]::CreateRunspace()
+  $runspace.ApartmentState = 'STA'
+  $runspace.ThreadOptions = 'UseNewThread'
+  $runspace.Open()
+  $ps = [powershell]::Create()
+  try {
+    $ps.Runspace = $runspace
+    [void]$ps.AddScript($action).AddArgument($value)
+    [void]$ps.Invoke()
+    if ($ps.HadErrors) { throw $ps.Streams.Error[0].Exception }
+  } finally {
+    $ps.Dispose()
+    $runspace.Dispose()
+  }
+}
+
+$SetFileDrop = {
+  param([string]$path)
+  Add-Type -AssemblyName System.Windows.Forms
+  $data = New-Object System.Windows.Forms.DataObject
+  $data.SetData([System.Windows.Forms.DataFormats]::FileDrop, [string[]]@($path))
+  # File Explorer reads this to know the files were copied (1), not cut (2).
+  $data.SetData('Preferred DropEffect', (New-Object IO.MemoryStream (, [byte[]](1, 0, 0, 0))))
+  [System.Windows.Forms.Clipboard]::SetDataObject($data, $true)
+}
+
+$SetText = {
+  param([string]$text)
+  Add-Type -AssemblyName System.Windows.Forms
+  [System.Windows.Forms.Clipboard]::SetText($text)
+}
+
 function Set-ClipboardFile([string]$path) {
   if (-not ([IO.File]::Exists($path) -or [IO.Directory]::Exists($path))) { return @{ ok = $false; error = 'Not found' } }
-  $files = New-Object System.Collections.Specialized.StringCollection
-  [void]$files.Add($path)
-  [System.Windows.Forms.Clipboard]::SetFileDropList($files)
+  Invoke-ClipboardThread $SetFileDrop $path
   @{ ok = $true }
 }
 
@@ -90,7 +123,7 @@ function Invoke-Request([string]$line) {
     }
     'copy-path' {
       if (-not $arg) { return @{ ok = $false; error = 'No path' } }
-      [System.Windows.Forms.Clipboard]::SetText($arg)
+      Invoke-ClipboardThread $SetText $arg
       return @{ ok = $true }
     }
     'open' {
