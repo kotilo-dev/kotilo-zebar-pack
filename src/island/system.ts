@@ -45,7 +45,8 @@ type Script =
   | 'window-icons'
   | 'media-art'
   | 'rss'
-  | 'files';
+  | 'files'
+  | 'elevate';
 
 const scriptArgs = (name: Script) => [
   '-NoProfile',
@@ -683,6 +684,26 @@ export const listFolder = (path: string | null) =>
 
 /** Puts a file or folder on the clipboard, ready to paste in File Explorer. */
 export const copyFileToClipboard = (path: string) => files.request(`copy ${hex(path)}`).then(() => {});
+/* ---- Run as administrator (scripts/elevate.ps1) ---- */
+
+const elevate = lineHelper('elevate', 15_000, 30_000);
+
+/**
+ * Starts a Start menu app as administrator; Windows asks for consent (UAC).
+ * Resolves `unsupported` for a Store app (Windows cannot elevate those),
+ * `cancelled` when the prompt was declined.
+ */
+export const launchAppAsAdmin = (app: StartApp) =>
+  // The answer comes after the UAC prompt, so the wait is long.
+  elevate.request(`run ${hex(app.appId)}`, 120_000).then(
+    (): 'ok' => 'ok',
+    (err: unknown) => {
+      const reason = err instanceof Error ? err.message : String(err);
+      if (reason === 'unsupported' || reason === 'cancelled') return reason;
+      throw err;
+    },
+  );
+
 /** Opens a folder in File Explorer or a file in its default app. */
 export const openFileEntry = (path: string) => files.request(`open ${hex(path)}`).then(() => {});
 /** Puts a path on the clipboard as text. */

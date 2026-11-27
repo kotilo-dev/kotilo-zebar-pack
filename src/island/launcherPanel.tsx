@@ -26,6 +26,7 @@ import {
   clipboardHistory,
   copyClipItem,
   launchApp,
+  launchAppAsAdmin,
   listApps,
   openRecentFile,
   openSettingsPage,
@@ -55,6 +56,8 @@ type Result = {
   confirm?: boolean;
   disabled?: boolean;
   run: () => void;
+  /** Ctrl+Shift+Enter or Ctrl+Shift+click, as in the Start menu: run as administrator. */
+  runAsAdmin?: () => void;
 };
 
 // Lists kept between openings, so the launcher shows them at once. Each read
@@ -89,6 +92,8 @@ export function LauncherView({ out, active }: { out: IslandOutputs; active: bool
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState(0);
   const [armed, setArmed] = useState<string | null>(null);
+  /** Ctrl and Shift held: app rows offer "Run as admin". */
+  const [adminKeys, setAdminKeys] = useState(false);
   const input = useRef<HTMLInputElement>(null);
 
   // Each time the launcher opens: clear the search and focus it. The app list
@@ -99,6 +104,7 @@ export function LauncherView({ out, active }: { out: IslandOutputs; active: bool
     setQuery('');
     setSelected(0);
     setArmed(null);
+    setAdminKeys(false);
     setClips(null);
     setIcons(appIconCache());
     // GlazeWM's keybindings, for searching them; read once, then after each change on the Keybindings page.
@@ -253,6 +259,13 @@ export function LauncherView({ out, active }: { out: IslandOutputs; active: bool
       hint: 'Open ↵',
       score,
       run: () => done(`app:${app.appId}`, () => launchApp(app)),
+      runAsAdmin: () =>
+        done(`app:${app.appId}`, async () => {
+          const result = await launchAppAsAdmin(app);
+          if (result === 'unsupported') {
+            showBanner({ icon: 'info', title: `${app.name} can't run as administrator`, sub: 'Store apps run without admin rights' }, 3000);
+          }
+        }),
     });
 
     // Nothing typed: the apps chosen most, then the rest in name order.
@@ -429,8 +442,9 @@ export function LauncherView({ out, active }: { out: IslandOutputs; active: bool
 
   const current = Math.min(selected, results.length - 1);
 
-  const choose = (result: Result | undefined) => {
+  const choose = (result: Result | undefined, asAdmin = false) => {
     if (!result || result.disabled) return;
+    if (asAdmin && result.runAsAdmin) return result.runAsAdmin();
     if (result.confirm && armed !== result.key) return setArmed(result.key);
     setArmed(null);
     result.run();
@@ -455,6 +469,7 @@ export function LauncherView({ out, active }: { out: IslandOutputs; active: bool
             setArmed(null);
           }}
           onKeyDown={(e) => {
+            setAdminKeys(e.ctrlKey && e.shiftKey);
             if (e.key === 'ArrowDown') {
               e.preventDefault();
               setSelected(Math.min(current + 1, results.length - 1));
@@ -464,9 +479,11 @@ export function LauncherView({ out, active }: { out: IslandOutputs; active: bool
               setSelected(Math.max(current - 1, 0));
               setArmed(null);
             } else if (e.key === 'Enter') {
-              choose(results[current]);
+              choose(results[current], e.ctrlKey && e.shiftKey);
             }
           }}
+          onKeyUp={(e) => setAdminKeys(e.ctrlKey && e.shiftKey)}
+          onBlur={() => setAdminKeys(false)}
         />
         {apps && mode === 'all' && !text && <span className="search-count">{apps.length}</span>}
       </label>
@@ -480,15 +497,20 @@ export function LauncherView({ out, active }: { out: IslandOutputs; active: bool
               key={r.key}
               className={`result ${i === current ? 'selected' : ''} ${isArmed ? 'armed' : ''}`}
               onMouseEnter={() => setSelected(i)}
-              onClick={() => choose(r)}
-              disabled={r.disabled}
-            >
+              onClick={(e) => choose(r, e.ctrlKey && e.shiftKey)}
+              disabled={r.disabled}            >
               <ResultIcon icon={r.icon} />
               <span className="result-text">
                 <span className="ellipsis">{highlight(r.title, r.at)}</span>
                 {r.sub && <span className="result-sub ellipsis">{r.sub}</span>}
               </span>
-              {(i === current || isArmed) && r.hint && <span className="result-hint">{isArmed ? 'Press again' : r.hint}</span>}
+              {(i === current || isArmed) && r.hint && (
+                <span className="result-hint">
+                  {isArmed ? 'Press again' : adminKeys && r.runAsAdmin ? 'Run as admin ↵' : r.hint}
+                  {/* The Start menu's shortcut, shown where it applies so it can be found. */}
+                  {!isArmed && !adminKeys && r.runAsAdmin && <span className="result-hint-alt">Admin Ctrl+Shift+↵</span>}
+                </span>
+              )}
             </button>
           );
         })}

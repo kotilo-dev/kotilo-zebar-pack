@@ -29,7 +29,8 @@ panels — all without leaving the keyboard.
   restart…), GlazeWM commands (float, fullscreen, go to or move to a workspace…), Windows Settings pages
   and recent files. Fuzzy matching (`vsc` finds Visual Studio Code); results you pick often rise to the
   top. Prefixes: `=` calculator and unit conversion (`=10 km to mi`, also without `=`), `:` emoji,
-  `?` web search, `,` clipboard history.
+  `?` web search, `,` clipboard history. `Ctrl+Shift+Enter` (or `Ctrl+Shift`+click) runs an app as
+  administrator, as in the Start menu.
 - **Windows:** every window on every workspace with its program icon; search, switch, close one or all.
 - **News:** stories from your RSS and Atom feeds, newest first, with a feed filter; a click opens the
   story in your browser.
@@ -145,6 +146,8 @@ helpers over their standard input and are checked there.
 - The launcher opens only listed Settings pages, Google searches, and recent files through their
   shortcuts in your `Recent` folder. Recent files appear only while Windows' "Show recently opened items"
   setting is on.
+- **Run as administrator** starts only apps listed in the Start menu, and Windows asks for consent (UAC)
+  every time. Store apps such as Calculator cannot run elevated; the launcher says so instead.
 - Network: Zebar's own weather and IP-location lookups; the weather panel's forecast request to
   Open-Meteo (approximate coordinates, at most every 15 minutes while the panel is open); and a web
   search when you choose one in the launcher (it opens Google in your browser); the RSS and Atom feeds

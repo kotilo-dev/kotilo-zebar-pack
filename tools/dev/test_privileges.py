@@ -98,6 +98,11 @@ cases = [
     ("powershell.exe", DEV + r"files.ps1 list C:\Windows", False),
     ("powershell.exe", DEV + "files2.ps1", False),
     ("powershell.exe", DEV + "recent.ps1 x", False),
+    # Run as administrator: the helper takes the AppID on stdin, never as an argument.
+    ("powershell.exe", DEV + "elevate.ps1", True),
+    ("powershell.exe", MARKET + "elevate.ps1", True),
+    ("powershell.exe", DEV + r"elevate.ps1 run C:\Windows\System32\cmd.exe", False),
+    ("powershell.exe", DEV + "elevate2.ps1", False),
     ("explorer.exe", "ms-settings:display", True),
     ("explorer.exe", "ms-settings:display-advanced", False),
     ("explorer.exe", r"ms-settings:display C:\evil.exe", False),

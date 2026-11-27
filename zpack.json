@@ -75,7 +75,7 @@
         "shellCommands": [
           {
             "program": "powershell.exe",
-            "argsRegex": "^-NoProfile -NonInteractive -ExecutionPolicy Bypass -File [A-Za-z]:[\\\\/]Users[\\\\/][^\\\\/\" ]+(?:[\\\\/][^\\\\/\" ]+)*[\\\\/](?:[A-Za-z0-9_-]+\\.)?kotilo-zebar-pack(?:@[0-9A-Za-z.+-]+)?[\\\\/]scripts[\\\\/](list-apps|app-icons|sleep|focus|clipboard|audio|wifi|sysmon|calendar|bluetooth|appearance|tweaks|notifications|recent|window-icons|media-art|rss|files)\\.ps1$"
+            "argsRegex": "^-NoProfile -NonInteractive -ExecutionPolicy Bypass -File [A-Za-z]:[\\\\/]Users[\\\\/][^\\\\/\" ]+(?:[\\\\/][^\\\\/\" ]+)*[\\\\/](?:[A-Za-z0-9_-]+\\.)?kotilo-zebar-pack(?:@[0-9A-Za-z.+-]+)?[\\\\/]scripts[\\\\/](list-apps|app-icons|sleep|focus|clipboard|audio|wifi|sysmon|calendar|bluetooth|appearance|tweaks|notifications|recent|window-icons|media-art|rss|files|elevate)\\.ps1$"
           },
           {
             "program": "explorer.exe",

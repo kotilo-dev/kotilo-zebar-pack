@@ -6,6 +6,10 @@
   folders and drives, a click goes into a folder and Up (or Backspace) goes back. Each row can open the
   item (a folder in File Explorer, a file in its default app), copy the file itself to paste in File
   Explorer, or copy its path. Hidden and system files are not listed.
+- **Added:** run an app as administrator from the launcher with `Ctrl+Shift+Enter` or `Ctrl+Shift`+click,
+  as in the Start menu. The selected app shows the shortcut next to "Open", and "Run as admin" while both
+  keys are held. Windows asks for consent (UAC), or your company's elevation tool (such as Admin By
+  Request) does; Store apps, which cannot run elevated, get a note instead.
 - **Changed:** the Clipboard button moved to the right-hand group of the control centre's header.
 
 ## 0.3.0 — 2026-11-24
