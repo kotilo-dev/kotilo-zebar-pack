@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.0 — 2026-11-27
 
 - **Added:** a Files panel (folder button in the control centre's top left): it starts with your main
   folders and drives, a click goes into a folder and Up (or Backspace) goes back. Each row can open the
